@@ -1,0 +1,603 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Word-документов</title>
+
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .form-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .input-field {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .file-drop-area {
+            border: 3px dashed #d1d5db;
+            transition: all 0.3s ease;
+        }
+
+        .file-drop-area:hover, .file-drop-area.dragover {
+            border-color: #667eea;
+            background-color: #f0f3ff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .progress-bar {
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .error-message {
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+<div class="container mx-auto px-4 py-8">
+    <!-- Заголовок -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
+            <i class="fas fa-file-word mr-3"></i>Генератор Word-документов
+        </h1>
+        <p class="text-xl text-white opacity-90 max-w-2xl mx-auto">
+            Заполните форму и загрузите шаблон Word для автоматической замены данных
+        </p>
+    </div>
+
+    <!-- Основная форма -->
+    <div class="max-w-4xl mx-auto">
+        <div class="form-card rounded-2xl shadow-2xl p-6 md:p-8">
+            <!-- Сообщения -->
+            <div id="errorMessage" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <div class="flex">
+                    <i class="fas fa-exclamation-circle text-red-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="text-red-700 font-medium" id="errorText"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="successMessage" class="hidden bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+                <div class="flex">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="text-green-700 font-medium" id="successText"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Прогресс бар -->
+            <div id="progressContainer" class="hidden mb-6">
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-700">Загрузка и обработка</span>
+                    <span class="text-sm font-medium text-gray-700" id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full progress-bar"></div>
+                </div>
+            </div>
+
+            <form id="documentForm" class="space-y-8" enctype="multipart/form-data">
+                <!-- Основные поля -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Колонка 1 -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="file_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-building mr-2"></i>Название файла
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   id="file_name"
+                                   name="file_name"
+                                   required
+                                   class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="результат.docx">
+                        </div>
+
+                        <div>
+                            <label for="company_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-building mr-2"></i>Название филиала
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   id="company_name"
+                                   name="company_name"
+                                   required
+                                   class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="ООО «Газпром трансгаз Самара»">
+                        </div>
+
+                        <div>
+                            <label for="contract_number" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-hashtag mr-2"></i>Название компании
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   id="contract_number"
+                                   name="contract_number"
+                                   required
+                                   class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="«Газпром»">
+                        </div>
+
+                        <div>
+                            <label for="director_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-barcode mr-2"></i>Серийный номер
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   id="director_name"
+                                   name="director_name"
+                                   required
+                                   class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="СЕРИЙНИК">
+                        </div>
+                    </div>
+
+                    <!-- Колонка 2 -->
+                    <div class="space-y-6">
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-barcode mr-2"></i>Старый серийный номер
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   id="address"
+                                   name="address"
+                                   required
+                                   class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                   placeholder="СТАРЫЙ СЕРИЙНИК">
+                        </div>
+
+                        <div>
+                            <label for="contract_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calendar-alt mr-2"></i>Дата
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="date"
+                                   id="contract_date"
+                                   name="contract_date"
+                                   required
+                                   class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label for="contract_type" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-file-contract mr-2"></i>Тип документа
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <select id="contract_type"
+                                    name="contract_type"
+                                    required
+                                    class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="техническое задание">Техническое задание</option>
+                                <option value="договор">Договор</option>
+                                <option value="акт">Акт</option>
+                                <option value="отчет">Отчет</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Загрузка файла -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-4">
+                        <i class="fas fa-file-upload mr-2"></i>Файл шаблона (.docx)
+                        <span class="text-red-500">*</span>
+                        <span class="text-sm text-gray-500 ml-2">Макс. размер: 100MB</span>
+                    </label>
+
+                    <div id="fileDropArea"
+                         class="file-drop-area border-2 rounded-xl p-8 text-center cursor-pointer transition-all duration-300">
+                        <div class="flex flex-col items-center justify-center space-y-4">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400"></i>
+                            <div>
+                                <p class="text-lg font-medium text-gray-700">
+                                    Перетащите файл сюда или нажмите для выбора
+                                </p>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Поддерживаются только файлы .docx
+                                </p>
+                            </div>
+                            <input type="file"
+                                   id="template_file"
+                                   name="template_file"
+                                   accept=".docx"
+                                   required
+                                   class="hidden">
+                            <button type="button"
+                                    onclick="document.getElementById('template_file').click()"
+                                    class="px-6 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
+                                <i class="fas fa-search mr-2"></i>Выбрать файл
+                            </button>
+                        </div>
+                        <div id="fileName" class="mt-4 text-blue-600 font-medium hidden">
+                            <i class="fas fa-file-word mr-2"></i><span id="fileText"></span>
+                            <span id="fileSize" class="text-sm text-gray-500 ml-2"></span>
+                        </div>
+                    </div>
+
+                    <!-- Информация о плейсхолдерах -->
+                    <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                        <div class="flex">
+                            <i class="fas fa-lightbulb text-yellow-500 mt-1 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium text-yellow-800">Используйте эти плейсхолдеры в шаблоне:</h4>
+                                <div class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    <code class="bg-white px-2 py-1 rounded text-sm border">&#123;&#123;filial&#125;&#125;</code>
+                                    <code class="bg-white px-2 py-1 rounded text-sm border">&#123;&#123;company&#125;&#125;</code>
+                                    <code class="bg-white px-2 py-1 rounded text-sm border">&#123;&#123;kind_of_number&#125;&#125;</code>
+                                    <code class="bg-white px-2 py-1 rounded text-sm border">&#123;&#123;old_kind_of_number&#125;&#125;</code>
+                                    <code class="bg-white px-2 py-1 rounded text-sm border">&#123;&#123;CONTRACT_DATE&#125;&#125;</code>
+                                    <code class="bg-white px-2 py-1 rounded text-sm border">&#123;&#123;CONTRACT_TYPE&#125;&#125;</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопки -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+                    <button type="submit"
+                            id="submitBtn"
+                            class="btn-primary text-white font-medium py-3 px-8 rounded-lg flex items-center justify-center space-x-2">
+                        <i class="fas fa-magic"></i>
+                        <span>Сгенерировать документ</span>
+                    </button>
+
+                    <button type="button"
+                            onclick="downloadSample()"
+                            class="bg-gray-100 text-gray-800 font-medium py-3 px-8 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2">
+                        <i class="fas fa-download"></i>
+                        <span>Скачать пример шаблона</span>
+                    </button>
+
+                    <button type="button"
+                            onclick="resetForm()"
+                            class="bg-red-50 text-red-700 font-medium py-3 px-8 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center space-x-2">
+                        <i class="fas fa-redo"></i>
+                        <span>Очистить форму</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Футер -->
+    <footer class="mt-12 text-center text-white opacity-75">
+        <p>© 2024 Генератор Word-документов | FastAPI</p>
+        <p class="text-sm mt-2">Сервер запущен: <span id="serverAddress" class="font-mono"></span></p>
+    </footer>
+</div>
+
+<script>
+    // Определение URL сервера
+    function getServerAddress() {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        const serverUrl = `${protocol}//${hostname}${port ? ':' + port : ''}`;
+        return serverUrl;
+    }
+
+    // Показываем адрес сервера в футере
+    document.getElementById('serverAddress').textContent = getServerAddress();
+
+    // Устанавливаем сегодняшнюю дату по умолчанию
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('contract_date').value = today;
+    document.getElementById('contract_date').min = today;
+
+    // Drag and drop для файлов
+    const fileDropArea = document.getElementById('fileDropArea');
+    const fileInput = document.getElementById('template_file');
+    const fileName = document.getElementById('fileName');
+    const fileText = document.getElementById('fileText');
+    const fileSize = document.getElementById('fileSize');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        fileDropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        fileDropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        fileDropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        fileDropArea.classList.add('dragover');
+    }
+
+    function unhighlight() {
+        fileDropArea.classList.remove('dragover');
+    }
+
+    fileDropArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        updateFileName(files[0]);
+    }
+
+    fileInput.addEventListener('change', function() {
+        updateFileName(this.files[0]);
+    });
+
+    function updateFileName(file) {
+        if (file) {
+            fileName.classList.remove('hidden');
+            fileText.textContent = file.name;
+
+            // Показываем размер файла
+            const size = formatFileSize(file.size);
+            fileSize.textContent = `(${size})`;
+
+            fileDropArea.classList.add('border-green-400', 'bg-green-50');
+
+            // Проверяем размер файла
+            if (file.size > 100 * 1024 * 1024) { // 100MB
+                showError(`Файл слишком большой (${size}). Максимальный размер: 100MB`);
+            }
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Сброс формы
+    function resetForm() {
+        document.getElementById('documentForm').reset();
+        fileName.classList.add('hidden');
+        fileDropArea.classList.remove('border-green-400', 'bg-green-50');
+        hideMessages();
+        document.getElementById('contract_date').value = today;
+    }
+
+    // Скачивание примера шаблона
+    async function downloadSample() {
+        try {
+            showLoading();
+            const response = await fetch('/download_sample');
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Пример_шаблона.docx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showSuccess('Пример шаблона скачивается...');
+            } else {
+                const error = await response.json();
+                showError(error.detail || 'Ошибка при скачивании шаблона');
+            }
+        } catch (error) {
+            showError('Ошибка сети: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Обработка формы
+    document.getElementById('documentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
+        try {
+            showLoading();
+            showProgress(10);
+
+            const formData = new FormData(this);
+
+            showProgress(30);
+
+            const response = await fetch('/generate', {
+                method: 'POST',
+                body: formData
+            });
+
+            showProgress(70);
+
+            if (response.ok) {
+                showProgress(90);
+                const blob = await response.blob();
+                showProgress(100);
+
+                // Создаем ссылку для скачивания
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Получаем имя файла из заголовков
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = 'Документ.docx';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="(.+)"/);
+                    if (match) filename = decodeURIComponent(match[1]);
+                }
+
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showSuccess('Документ успешно сгенерирован и скачивается!');
+
+                // Скрываем прогресс через 2 секунды
+                setTimeout(() => {
+                    hideProgress();
+                }, 2000);
+
+            } else {
+                const error = await response.json();
+                showError(error.detail || `Ошибка сервера: ${response.status}`);
+            }
+
+        } catch (error) {
+            showError('Ошибка сети: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Валидация формы
+    function validateForm() {
+        const requiredFields = document.querySelectorAll('[required]');
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('border-red-500');
+                isValid = false;
+            } else {
+                field.classList.remove('border-red-500');
+            }
+        });
+
+        if (!isValid) {
+            showError('Пожалуйста, заполните все обязательные поля');
+            return false;
+        }
+
+        // Проверка файла
+        const fileInput = document.getElementById('template_file');
+        if (!fileInput.files.length) {
+            showError('Пожалуйста, выберите файл шаблона');
+            return false;
+        }
+
+        const file = fileInput.files[0];
+        if (!file.name.toLowerCase().endsWith('.docx')) {
+            showError('Поддерживаются только файлы .docx (Microsoft Word)');
+            return false;
+        }
+
+        if (file.size > 100 * 1024 * 1024) {
+            showError('Файл слишком большой. Максимальный размер: 100MB');
+            return false;
+        }
+
+        return true;
+    }
+
+    // Утилиты для сообщений
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        errorText.textContent = message;
+        errorDiv.classList.remove('hidden');
+        document.getElementById('successMessage').classList.add('hidden');
+    }
+
+    function showSuccess(message) {
+        const successDiv = document.getElementById('successMessage');
+        const successText = document.getElementById('successText');
+        successText.textContent = message;
+        successDiv.classList.remove('hidden');
+        document.getElementById('errorMessage').classList.add('hidden');
+    }
+
+    function hideMessages() {
+        document.getElementById('errorMessage').classList.add('hidden');
+        document.getElementById('successMessage').classList.add('hidden');
+    }
+
+    function showLoading() {
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Обработка...</span>';
+        btn.disabled = true;
+    }
+
+    function hideLoading() {
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = '<i class="fas fa-magic mr-2"></i><span>Сгенерировать документ</span>';
+        btn.disabled = false;
+    }
+
+    function showProgress(percent) {
+        document.getElementById('progressContainer').classList.remove('hidden');
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressPercent').textContent = percent + '%';
+    }
+
+    function hideProgress() {
+        document.getElementById('progressContainer').classList.add('hidden');
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressPercent').textContent = '0%';
+    }
+
+    // Очистка ошибок при вводе
+    document.querySelectorAll('input, select').forEach(field => {
+        field.addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.classList.remove('border-red-500');
+                hideMessages();
+            }
+        });
+    });
+</script>
+</body>
+</html>
