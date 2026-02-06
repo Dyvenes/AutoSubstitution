@@ -142,9 +142,7 @@ class WordTemplateProcessor:
                 
                 когда удаляется }} могут теряться пробелы 
                 """
-                print([_.text for _ in paragraph.runs])
                 index_to_write = i
-                print("INDEX =", index_to_write)
 
                 i += 1
 
@@ -152,7 +150,6 @@ class WordTemplateProcessor:
 
 
                 paragraph.runs[i].text = ''
-                print([_.text for _ in paragraph.runs])
 
                 var = str()
 
@@ -161,19 +158,14 @@ class WordTemplateProcessor:
                     i += 1
                     new_text = runs[i].text
                     paragraph.runs[i].text = ''
-                    print("GETTING VAR:", [_.text for _ in paragraph.runs])
-                    print("curr new_text:", new_text)
 
-                print("AFTER GETTING VAR:", [_.text for _ in paragraph.runs])
                 for key, value in self.replacements.items():
                     clear_key = key.replace('{{', '')
                     clear_key = clear_key.replace('}}', '')
                     if clear_key == var:
                         paragraph.runs[index_to_write].text = str(value)
-                        print("REPLACED", [_.text for _ in paragraph.runs])
                         break
             i += 1
-        print("ITOG", [_.text for _ in paragraph.runs])
 
 
     def copy_run_formatting(self, source_run, target_run):
@@ -279,8 +271,9 @@ def generate_document():
         length_of_pipline = csv[row_index][11]
         length_of_area = csv[row_index][12]
         wall_diam = csv[row_index][9]
-        wall_thic = csv[row_index][10]
-        wall_params = f"{wall_diam}x{wall_thic}".replace('.', ',')
+        wall_thic = str(float(csv[row_index][10])).replace('.', ',')
+        wall_params = f"{wall_diam}x{wall_thic}"
+        year_of_commissioning = datetime.fromisoformat(csv[row_index][13]).year
         diagnostic_date = datetime.fromisoformat(csv[row_index][19]).strftime("%d.%m.%Y")
 
         # HZ NOMERNAYA TABLE
@@ -307,7 +300,11 @@ def generate_document():
             '{{curr_date}}': curr_date,
             '{{str_curr_date}}': str_curr_date,  # день сделать двойным числом всегда
             '{{length_of_area}}': length_of_area,
+            '{{length_of_pipline}}': length_of_pipline,
             '{{wall_params}}': wall_params,
+            '{{wall_diam}}': wall_diam,
+            '{{wall_thic}}': wall_thic,
+            '{{year_of_commissioning}}': year_of_commissioning, # эксплуатации
 
             '{{full_pipline_name}}': pipline_name
         }
