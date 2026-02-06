@@ -104,7 +104,6 @@ class WordTemplateProcessor:
                 p_element.getparent().remove(p_element)
 
     def smart_replace_in_paragraph(self, paragraph):
-        """Умная замена с предварительным объединением Runs"""
         if not paragraph.runs:
             return
 
@@ -112,39 +111,48 @@ class WordTemplateProcessor:
         if not any(key in paragraph_text for key in self.replacements.keys()):
             return
 
-        print("--------------------------------")
-        print("KEYS IN TEXT")
         runs = list(paragraph.runs)
-        print([i.text.strip() for i in runs])
-        if len(runs) < 3:
-            if any('{{' in i.text for i in runs):
-                print("EXIST SHORT")
+        print([i.text for i in runs])
+
+        #print("STARTING", ['' for i in paragraph.runs])
+        if not any('{{' in i.text for i in runs):
             return
+
+        print("DO REPLACE")
+
+        for i in range(len(runs)):
+            if '{{' in runs[i].text and '}}' in runs[i].text:
+                print("FOUND ONE VAR IN:", runs[i].text)
+                for key, val in self.replacements.items():
+                    if key in runs[i].text:
+                        print("VAR IS:", key)
+                        paragraph.runs[i].text = paragraph.runs[i].text.replace(key, str(val))
+                        print("REPLACE SUCCESS")
 
         i = 0
         while i < len(runs) - 2:
             if not runs[i]:
                 continue
-            # print("RUNS[i] exist")
+
             new_text = runs[i].text
-            # paragraph.runs[i].text = '|test|'
             if '{{' == new_text.strip():
                 """
                 TODO сейчас не надежно ищет, основываясь на том, что всегда 
                 делит отдельными ранами. Надо отслеживать, если встретились два {{ подряд, то рэйсить ошибку
+                
+                когда удаляется }} могут теряться пробелы 
                 """
+                print([_.text for _ in paragraph.runs])
                 index_to_write = i
+                print("INDEX =", index_to_write)
 
                 i += 1
 
                 new_text = runs[i].text
 
 
-                print("BEFORE:",[i.text.strip() for i in paragraph.runs])
                 paragraph.runs[i].text = ''
-                del paragraph.runs[i]
-                paragraph.runs.__delitem__(i)
-                print("AFTER:",[i.text.strip() for i in paragraph.runs])
+                print([_.text for _ in paragraph.runs])
 
                 var = str()
 
@@ -152,41 +160,21 @@ class WordTemplateProcessor:
                     var += new_text
                     i += 1
                     new_text = runs[i].text
-                    print("BEFORE:",[i.text.strip() for i in paragraph.runs])
                     paragraph.runs[i].text = ''
-                    del paragraph.runs[i]
-                    paragraph.runs.__delitem__(i)
-                    print("AFTER:",[i.text.strip() for i in paragraph.runs]) #TODO когда удаляется }} могут теряться пробелы
+                    print("GETTING VAR:", [_.text for _ in paragraph.runs])
+                    print("curr new_text:", new_text)
 
-                print("var_name:" + var)
-
+                print("AFTER GETTING VAR:", [_.text for _ in paragraph.runs])
                 for key, value in self.replacements.items():
                     clear_key = key.replace('{{', '')
                     clear_key = clear_key.replace('}}', '')
                     if clear_key == var:
                         paragraph.runs[index_to_write].text = str(value)
+                        print("REPLACED", [_.text for _ in paragraph.runs])
                         break
             i += 1
+        print("ITOG", [_.text for _ in paragraph.runs])
 
-        # self.merge_runs_with_placeholders(paragraph)
-        # original_runs = list(paragraph.runs)
-        # if not original_runs:
-        #     return
-        #
-        # paragraph_text = paragraph.text
-        # if not any(key in paragraph_text for key in self.replacements.keys()):
-        #     return
-        #
-        # paragraph.clear()
-        # for run in original_runs:
-        #     new_text = run.text
-        #     for key, value in self.replacements.items():
-        #         if key in new_text:
-        #             new_text = new_text.replace(key, str(value))
-        #
-        #     if new_text:
-        #         new_run = paragraph.add_run(new_text)
-        #         self.copy_run_formatting(run, new_run)
 
     def copy_run_formatting(self, source_run, target_run):
         """Копирует форматирование из одного Run в другой"""
@@ -288,6 +276,11 @@ def generate_document():
         workshop = csv[row_index][4]
         inventory_number = csv[row_index][5]
         pipline_name = csv[row_index][7]
+        length_of_pipline = csv[row_index][11]
+        length_of_area = csv[row_index][12]
+        wall_diam = csv[row_index][9]
+        wall_thic = csv[row_index][10]
+        wall_params = f"{wall_diam}x{wall_thic}".replace('.', ',')
         diagnostic_date = datetime.fromisoformat(csv[row_index][19]).strftime("%d.%m.%Y")
 
         # HZ NOMERNAYA TABLE
@@ -299,29 +292,24 @@ def generate_document():
         print(enter_lay_csv)
         enter_lay_csv = [i.split(';') for i in enter_lay_csv]
 
-        full_pipline_name = enter_lay_csv[0][2]
-        # full_pipline_name = "test"
-        length_of_area = enter_lay_csv[3][2]
-        # length_of_area = "test"
-        wall_params = enter_lay_csv[2][2]
-        # wall_params = "test"
+        #full_pipline_name = enter_lay_csv[0][2]
         # ----------------------------------------------------------
         replacements = {
             '{{curr_year}}': curr_year,
             '{{report_number}}': report_number,
             '{{rep_num}}': report_number,
             '{{year_short}}': year_short,
-            '{{pipline_name}}': full_pipline_name,  # временно
+            '{{pipline_name}}': pipline_name,  # временно
             '{{inventory_number}}': inventory_number,
             '{{deposit}}': deposit,
             '{{workshop}}': workshop,
             '{{diagnostic_date}}': diagnostic_date,
             '{{curr_date}}': curr_date,
             '{{str_curr_date}}': str_curr_date,  # день сделать двойным числом всегда
-            '{{length_of_area}}': length_of_area,  # не та ячейка
-            '{{wall_params}}': wall_params,  # не та ячейка
+            '{{length_of_area}}': length_of_area,
+            '{{wall_params}}': wall_params,
 
-            '{{full_pipline_name}}': full_pipline_name
+            '{{full_pipline_name}}': pipline_name
         }
 
         processor = WordTemplateProcessor(str(TEMPLATE_PATH))
