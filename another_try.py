@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template
+from flask import Flask, request, send_file, render_template, jsonify
 
 from pathlib import Path
 from datetime import datetime
@@ -19,6 +19,7 @@ UPLOAD_DIR = BASE_DIR / "uploads"
 OUTPUT_DIR = BASE_DIR / "output"
 STATIC_DIR = BASE_DIR / "static"
 TEMPLATE_PATH = BASE_DIR / "templates/template_file.docx"
+DATA_DIR = BASE_DIR / "data"
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
@@ -329,7 +330,13 @@ def process_graf_file():
     print("PROCESSING FILE")
     file = request.files.get("graf_file")
 
-    df = pd.read_excel(file, usecols='A:Z', nrows=100, dtype=str, engine='openpyxl')
+    file.save("data/graf.xlsx") # ?если файл не подходящего формата, то надо его удалить?
+    # создает файл, даже если его по сути нет
+    with open("data/date_manager.txt", "w+") as manager: # может лучше сделать csv
+        manager.write(f"graf.xlsx;{file.filename}\n") # _TODO сейчас вроде перезаписывается весь файл
+
+
+    df = pd.read_excel(file, nrows=100, dtype=str, engine='openpyxl')
 
     csv = df.to_csv(sep=';').split('\r\n')
     csv = [i.split(';') for i in csv]
@@ -347,7 +354,6 @@ def process_graf_file():
             "error": "Неизвестный формат файла"
         }, 500
 
-
     print("ROW:", row, "COL:", col)
 
     options = [csv[i_r][col] for i_r in range(row, len(csv)) if (len(csv[i_r]) > 2 and csv[i_r][col] != '')]
@@ -356,6 +362,49 @@ def process_graf_file():
         "success": True,
         "data": options,
     }
+
+@app.route("/preload_files", methods=["GET"])
+def preload_files():
+    with open("data/date_manager.txt", 'r') as manager:
+        files_names = manager.read().split('\n')
+        for i in range(len(files_names)):
+            if files_names[i] == '':
+                files_names.pop(i)
+        if len(files_names) == 0 or not any(line != '' for line in files_names):
+            return {
+                "success": True,
+                "files": None
+            }
+        files = []
+        for file_name in files_names:
+            files.append(file_name.split(';')[0])
+        print("PRELOADING FILENAMES:", files)
+        return {
+            "success": True,
+            "files": files
+        }
+
+@app.route("/upload_file", methods=["GET"])
+def upload_file():
+
+    filename = request.args.get('name')
+    print(filename)
+
+    file_path = DATA_DIR / filename
+    print("UPLOADING FILE:", file_path)
+
+    original_filename = 'file not exist'
+    with open('data/date_manager.txt', 'r') as manager:
+        file_lines = manager.read().split('\n')
+        for line in file_lines:
+            if filename in line:
+                original_filename = line.split(';')[1]
+
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=original_filename
+    )
 
 
 @app.route("/download_sample", methods=["GET"])

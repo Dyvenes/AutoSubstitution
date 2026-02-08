@@ -144,7 +144,7 @@
                             <select id="TO_number"
                                     name="TO_number"
                                     required
-                                    class="w-full px-4 py-3 rounded-lg input-field cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus: ring-blue-500 appearance-none bg-white">
+                                    class="w-full px-4 py-3 rounded-lg input-field cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
                                 <option value="" disabled selected>Загрузите файл шаблона</option>
                             </select>
                         </div>
@@ -161,7 +161,7 @@
 
                                     <div id="graf_file_name" class="flex-grow min-w-0 bg-none">
                                         <span id="graf_file_text">Файл не выбран</span>
-                                        <span id="graf_file_size" class="=text-sm text-gray-500 ml-2"></span>
+                                        <span id="graf_file_size" class="text-sm text-gray-500 ml-2"></span>
                                     </div>
 
                                     <!-- Кнопка изменения -->
@@ -176,8 +176,7 @@
                                            id="graf_file"
                                            name="graf_file"
                                            class="hidden"
-                                           accept=".xlsx,.xls"
-                                           onchange="handleFileChange(this)">
+                                           accept=".xlsx,.xls">
                                 </div>
                             </div>
                         </div>
@@ -238,6 +237,19 @@
 
 
 <script>
+    // constants
+
+    const FILE_FIELDS_IDS = {
+        graf: {
+            dropArea: 'grafFileDropArea',
+            input: 'graf_file',
+            nameDisplay: 'graf_file_name',
+            text: 'graf_file_text',
+            size: 'graf_file_size',
+            color: 'green'
+        }
+    }
+
     // Определение URL сервера
     function getServerAddress() {
         const protocol = window.location.protocol;
@@ -250,8 +262,70 @@
     // Показываем адрес сервера в футере
     document.getElementById('serverAddress').textContent = getServerAddress();
 
+
     // Устанавливаем сегодняшнюю дату по умолчанию
     const today = new Date().toISOString().split('T')[0];
+    // загрузка существующих файлов
+    preload_files();
+
+    async function preload_files() {
+        try {
+            const response = await fetch('/preload_files');
+            const result = await response.json();
+            console.log(result.files)
+            if (result.success && result.files !== null) {
+                // Используем Promise.all для параллельной загрузки файлов
+                const uploadPromises = result.files.map(file => upload_file(file));
+                await Promise.all(uploadPromises);
+            }
+        } catch (error) {
+            console.error('Ошибка при предзагрузке файлов:', error);
+        }
+    }
+
+// СЕЙЧАС РАБОТАЕТ ТОЛЬКО ДЛЯ GRAF!!!!!!!!!!!
+    async function upload_file(file_name) {
+        try {
+            // GET-запрос для получения файла по имени
+            const response = await fetch(`/upload_file?name=${encodeURIComponent(file_name)}`);
+
+            const blob = await response.blob();
+
+            // Создаем File объект из blob
+            const file = new File(
+                [blob],
+                file_name, // Используем переданное имя файла
+                { type: blob.type || 'application/octet-stream' } // Определяем тип из blob
+            );
+
+<!--            updateFileName(-->
+<!--                file,-->
+<!--                document.getElementById(FILE_FIELDS_IDS.graf.nameDisplay),-->
+<!--                document.getElementById(FILE_FIELDS_IDS.graf.text),-->
+<!--                document.getElementById(FILE_FIELDS_IDS.graf.size),-->
+<!--                document.getElementById(FILE_FIELDS_IDS.graf.dropArea),-->
+<!--                FILE_FIELDS_IDS.graf.color,-->
+<!--            );-->
+
+
+            // Создаем DataTransfer и устанавливаем файл
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+
+            // Находим input файла
+            const grafFileInput = document.getElementById('graf_file');
+
+            // Устанавливаем файлы в input
+            grafFileInput.files = dataTransfer.files;
+
+            // Вызываем событие change для триггера обработчиков
+            grafFileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+        } catch (error) {
+            console.error(`Ошибка при загрузке файла ${file_name}:`, error);
+        }
+    }
+
 
     // Функции для управления drag and drop
     function setupFileDrop(areaId, inputId, fileNameId, fileTextId, fileSizeId, highlightColor) {
@@ -310,6 +384,7 @@
 
     function updateFileName(file, fileNameDisplay, fileText, fileSize, dropArea, color) {
         if (file) {
+            console.log("updating filename")
             fileNameDisplay.classList.remove('hidden');
             fileText.textContent = file.name;
 
