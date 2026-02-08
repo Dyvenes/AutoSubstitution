@@ -3,11 +3,10 @@ from flask import Flask, request, send_file, render_template
 from pathlib import Path
 from datetime import datetime
 import io
-import socket
 
 from docx import Document
 
-import win32com.client
+import pandas as pd
 
 app = Flask(
     __name__,
@@ -19,7 +18,7 @@ BASE_DIR = Path(__file__).parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 OUTPUT_DIR = BASE_DIR / "output"
 STATIC_DIR = BASE_DIR / "static"
-TEMPLATE_PATH = BASE_DIR / "templates/0209_ВВД_Т. вр. (скв. 194) - скв.docx"
+TEMPLATE_PATH = BASE_DIR / "templates/template_file.docx"
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
@@ -213,7 +212,8 @@ def generate_document():
         print("GENERATING")
         filename = request.form.get("filename")  # TODO потом генерировать автоматически??
 
-        report_number = request.form.get("report_number")
+        grafic = request.files.get("graf_file")
+        report_number = request.form.get("TO_number")
         print("GOT VALUES")
 
         # template_file вы сейчас игнорируете и всегда берете TEMPLATE_PATH
@@ -233,26 +233,18 @@ def generate_document():
 
         start = time.time()
 
-        import pandas as pd
-
         # GRAFIC TABLE
-        grafic = request.files.get("template_file")
-        df = pd.read_excel(grafic, usecols='A:Z', nrows=100, dtype=str, engine='openpyxl')
+        df = pd.read_excel(grafic, nrows=100, dtype=str, engine='openpyxl')
 
-        csv = df.to_csv().split('\r\n')
-        csv = [i.split(',') for i in csv]
+        csv = df.to_csv(sep=';').split('\r\n')
+        csv = [i.split(';') for i in csv]
 
         row_index = 0
 
-        report_number = csv[row_index][23]
-
-        while report_number != '0209':
-            row_index += 1
-
-            report_number = csv[row_index][23]
-            if row_index == 100:
-                print("BREAK")
-                break
+        print("GOT REPORT_NUMBER:", report_number)
+        for row in range(len(csv)):
+            if report_number in csv[row]:
+                row_index = row
 
         end = time.time()
 
@@ -277,13 +269,13 @@ def generate_document():
         diagnostic_date = datetime.fromisoformat(csv[row_index][19]).strftime("%d.%m.%Y")
 
         # HZ NOMERNAYA TABLE
-        number_table = request.files.get("report_table_file")
+        #number_table = request.files.get("report_table_file")
 
-        enter_lay = pd.read_excel(number_table, sheet_name="Ввод данных", nrows=20, dtype=str, engine='openpyxl')
-        print("FILE READED")
-        enter_lay_csv = enter_lay.to_csv(sep=';').split('\r\n', )
-        print(enter_lay_csv)
-        enter_lay_csv = [i.split(';') for i in enter_lay_csv]
+        #enter_lay = pd.read_excel(number_table, sheet_name="Ввод данных", nrows=20, dtype=str, engine='openpyxl')
+        #print("FILE READED")
+        #enter_lay_csv = enter_lay.to_csv(sep=';').split('\r\n', )
+        #print(enter_lay_csv)
+        #enter_lay_csv = [i.split(';') for i in enter_lay_csv]
 
         #full_pipline_name = enter_lay_csv[0][2]
         # ----------------------------------------------------------
@@ -330,6 +322,40 @@ def generate_document():
         )
     except Exception as e:
         return {"detail": f"Ошибка сервера: {str(e)}"}, 500
+
+
+@app.route("/process_graf_file", methods=["POST"])
+def process_graf_file():
+    print("PROCESSING FILE")
+    file = request.files.get("graf_file")
+
+    df = pd.read_excel(file, usecols='A:Z', nrows=100, dtype=str, engine='openpyxl')
+
+    csv = df.to_csv(sep=';').split('\r\n')
+    csv = [i.split(';') for i in csv]
+
+    row = 0
+    col = 0
+    for i in range(len(csv)):
+        if 'ТО №' in csv[i]:
+            row = i + 1 # в текущем - заголовок
+            col = csv[i].index('ТО №')
+            break
+    else:
+        return {
+            "success": False,
+            "error": "Неизвестный формат файла"
+        }, 500
+
+
+    print("ROW:", row, "COL:", col)
+
+    options = [csv[i_r][col] for i_r in range(row, len(csv)) if (len(csv[i_r]) > 2 and csv[i_r][col] != '')]
+    print("NUMERS:", options)
+    return {
+        "success": True,
+        "data": options,
+    }
 
 
 @app.route("/download_sample", methods=["GET"])

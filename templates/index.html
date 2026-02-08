@@ -75,525 +75,567 @@
     </style>
 </head>
 <body class="min-h-screen gradient-bg">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Заголовок -->
-        <div class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
-                <i class="fas fa-file-word mr-3"></i>Генератор Word-документов
-            </h1>
-            <p class="text-xl text-white opacity-90 max-w-2xl mx-auto">
-                Заполните форму и загрузите шаблоны для автоматической замены данных
-            </p>
-        </div>
-
-        <!-- Основная форма -->
-        <div class="max-w-4xl mx-auto">
-            <div class="form-card rounded-2xl shadow-2xl p-6 md:p-8">
-                <!-- Сообщения -->
-                <div id="errorMessage" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-                    <div class="flex">
-                        <i class="fas fa-exclamation-circle text-red-500 mt-1 mr-3"></i>
-                        <div>
-                            <p class="text-red-700 font-medium" id="errorText"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="successMessage" class="hidden bg-green-50 border-l-4 border-green-500 p-4 mb-6">
-                    <div class="flex">
-                        <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
-                        <div>
-                            <p class="text-green-700 font-medium" id="successText"></p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Прогресс бар -->
-                <div id="progressContainer" class="hidden mb-6">
-                    <div class="flex justify-between mb-1">
-                        <span class="text-sm font-medium text-gray-700">Загрузка и обработка</span>
-                        <span class="text-sm font-medium text-gray-700" id="progressPercent">0%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                        <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full progress-bar"></div>
-                    </div>
-                </div>
-
-                <form id="documentForm" class="space-y-8" enctype="multipart/form-data">
-                    <!-- Основные поля -->
-                    <div class="space-y-6">
-                        <div>
-                            <label for="filename" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-building mr-2"></i>Название файла
-                            </label>
-                            <input type="text"
-                                    id="filename"
-                                    name="filename"
-                                    required
-                                    class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="0209_ВВД_Т. вр. (скв. 194) - скв. 194">
-                        </div>
-
-                        <div>
-                            <label for="report_number" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-building mr-2"></i>Номер отчета
-                            </label>
-                            <input type="text"
-                                    id="report_number"
-                                    name="report_number"
-                                    required
-                                    class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="0209">
-                        </div>
-                    </div>
-
-                    <!-- Загрузка файлов -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Файл шаблона -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-4">
-                                <i class="fas fa-file-upload mr-2"></i>Файл шаблона (.xlsx)
-                                <span class="text-red-500">*</span>
-                                <span class="text-sm text-gray-500 ml-2">Макс. размер: 100MB</span>
-                            </label>
-
-                            <div id="templateFileDropArea"
-                                 class="file-drop-area border-2 rounded-xl p-6 text-center cursor-pointer transition-all duration-300 h-full min-h-[200px] flex flex-col justify-center">
-                                <div class="flex flex-col items-center justify-center space-y-4">
-                                    <i class="fas fa-file-excel text-4xl text-blue-400"></i>
-                                    <div>
-                                        <p class="text-lg font-medium text-gray-700">
-                                            Шаблон документа
-                                        </p>
-                                        <p class="text-sm text-gray-500 mt-1">
-                                            Перетащите или нажмите для выбора
-                                        </p>
-                                        <p class="text-xs text-gray-400 mt-1">
-                                            Поддерживаются только файлы .xlsx
-                                        </p>
-                                    </div>
-                                    <input type="file"
-                                           id="template_file"
-                                           name="template_file"
-                                           accept=".xlsx"
-                                           required
-                                           class="hidden">
-                                    <button type="button"
-                                            onclick="document.getElementById('template_file').click()"
-                                            class="px-6 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors">
-                                        <i class="fas fa-search mr-2"></i>Выбрать файл
-                                    </button>
-                                </div>
-                                <div id="template_file_name" class="mt-4 text-blue-600 font-medium hidden">
-                                    <i class="fas fa-file-excel mr-2"></i><span id="templateFileText"></span>
-                                    <span id="templateFileSize" class="text-sm text-gray-500 ml-2"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Таблица отчета -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-4">
-                                <i class="fas fa-table mr-2"></i>Таблица отчета (.xlsx)
-                                <span class="text-red-500">*</span>
-                                <span class="text-sm text-gray-500 ml-2">Макс. размер: 100MB</span>
-                            </label>
-
-                            <div id="reportFileDropArea"
-                                 class="file-drop-area border-2 rounded-xl p-6 text-center cursor-pointer transition-all duration-300 h-full min-h-[200px] flex flex-col justify-center">
-                                <div class="flex flex-col items-center justify-center space-y-4">
-                                    <i class="fas fa-table text-4xl text-green-400"></i>
-                                    <div>
-                                        <p class="text-lg font-medium text-gray-700">
-                                            Таблица с данными
-                                        </p>
-                                        <p class="text-sm text-gray-500 mt-1">
-                                            Перетащите или нажмите для выбора
-                                        </p>
-                                        <p class="text-xs text-gray-400 mt-1">
-                                            Поддерживаются только файлы .xlsx
-                                        </p>
-                                    </div>
-                                    <input type="file"
-                                           id="report_table_file"
-                                           name="report_table_file"
-                                           accept=".xlsx"
-                                           required
-                                           class="hidden">
-                                    <button type="button"
-                                            onclick="document.getElementById('report_table_file').click()"
-                                            class="px-6 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
-                                        <i class="fas fa-search mr-2"></i>Выбрать файл
-                                    </button>
-                                </div>
-                                <div id="report_file_name" class="mt-4 text-green-600 font-medium hidden">
-                                    <i class="fas fa-file-excel mr-2"></i><span id="reportFileText"></span>
-                                    <span id="reportFileSize" class="text-sm text-gray-500 ml-2"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Кнопки -->
-                    <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-                        <button type="submit"
-                                id="submitBtn"
-                                class="btn-primary text-white font-medium py-3 px-8 rounded-lg flex items-center justify-center space-x-2">
-                            <i class="fas fa-magic"></i>
-                            <span>Сгенерировать документ</span>
-                        </button>
-
-                        <button type="button"
-                                onclick="downloadSample()"
-                                class="bg-gray-100 text-gray-800 font-medium py-3 px-8 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2">
-                            <i class="fas fa-download"></i>
-                            <span>Скачать пример шаблона</span>
-                        </button>
-
-                        <button type="button"
-                                onclick="resetForm()"
-                                class="bg-red-50 text-red-700 font-medium py-3 px-8 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center space-x-2">
-                            <i class="fas fa-redo"></i>
-                            <span>Очистить форму</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Футер -->
-        <footer class="mt-12 text-center text-white opacity-75">
-            <p>© 2024 Генератор Word-документов | FastAPI</p>
-            <p class="text-sm mt-2">Сервер запущен: <span id="serverAddress" class="font-mono"></span></p>
-        </footer>
+<div class="container mx-auto px-4 py-8">
+    <!-- Заголовок -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
+            <i class="fas fa-file-word mr-3"></i>Генератор Word-документов
+        </h1>
+        <p class="text-xl text-white opacity-90 max-w-2xl mx-auto">
+            Заполните форму и загрузите шаблоны для автоматической замены данных
+        </p>
     </div>
 
-    <script>
-        // Определение URL сервера
-        function getServerAddress() {
-            const protocol = window.location.protocol;
-            const hostname = window.location.hostname;
-            const port = window.location.port;
-            const serverUrl = `${protocol}//${hostname}${port ? ':' + port : ''}`;
-            return serverUrl;
-        }
+    <!-- Основная форма -->
+    <div class="max-w-4xl mx-auto">
+        <div class="form-card rounded-2xl shadow-2xl p-6 md:p-8">
+            <!-- Сообщения -->
+            <div id="errorMessage" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <div class="flex">
+                    <i class="fas fa-exclamation-circle text-red-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="text-red-700 font-medium" id="errorText"></p>
+                    </div>
+                </div>
+            </div>
 
-        // Показываем адрес сервера в футере
-        document.getElementById('serverAddress').textContent = getServerAddress();
+            <div id="successMessage" class="hidden bg-green-50 border-l-4 border-green-500 p-4 mb-6">
+                <div class="flex">
+                    <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                    <div>
+                        <p class="text-green-700 font-medium" id="successText"></p>
+                    </div>
+                </div>
+            </div>
 
-        // Устанавливаем сегодняшнюю дату по умолчанию
-        const today = new Date().toISOString().split('T')[0];
+            <!-- Прогресс бар -->
+            <div id="progressContainer" class="hidden mb-6">
+                <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-700">Загрузка и обработка</span>
+                    <span class="text-sm font-medium text-gray-700" id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full progress-bar"></div>
+                </div>
+            </div>
 
-        // Функции для управления drag and drop
-        function setupFileDrop(areaId, inputId, fileNameId, fileTextId, fileSizeId, highlightColor) {
-            const fileDropArea = document.getElementById(areaId);
-            const fileInput = document.getElementById(inputId);
-            const fileNameDisplay = document.getElementById(fileNameId);
-            const fileText = document.getElementById(fileTextId);
-            const fileSize = document.getElementById(fileSizeId);
+            <form id="documentForm" class="space-y-8" enctype="multipart/form-data">
+                <!-- Основные поля -->
+                <div class="space-y-6">
+                    <div>
+                        <label for="filename" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-building mr-2"></i>Название файла
+                        </label>
+                        <input type="text"
+                               id="filename"
+                               name="filename"
+                               required
+                               class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="0209_ВВД_Т. вр. (скв. 194) - скв. 194">
+                    </div>
+                        <!-- ================================= -->
 
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                fileDropArea.addEventListener(eventName, preventDefaults, false);
-            });
 
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="TO_number" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-list-ol mr-2"></i>Номер ТО из графика
+                            </label>
+                            <select id="TO_number"
+                                    name="TO_number"
+                                    required
+                                    class="w-full px-4 py-3 rounded-lg input-field cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus: ring-blue-500 appearance-none bg-white">
+                                <option value="" disabled selected>Загрузите файл шаблона</option>
+                            </select>
+                        </div>
 
-            ['dragenter', 'dragover'].forEach(eventName => {
-                fileDropArea.addEventListener(eventName, () => highlight(fileDropArea), false);
-            });
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-file-upload mr-2"></i>Загруженный файл
+                            </label>
 
-            ['dragleave', 'drop'].forEach(eventName => {
-                fileDropArea.addEventListener(eventName, () => unhighlight(fileDropArea), false);
-            });
+                            <div id="grafFileDropArea" class="file-drop-area transition-all duration-300 flex flex-col justify-center" style="border:none">
+                                <div class="flex items-center space-x-3 p-3 rounded-lg input-field bg-none">
+                                    <i class="fas fa-file-excel text-2xl text-gray-400"></i>
+                                    <!-- Название файла -->
 
-            function highlight(area) {
-                area.classList.add('dragover');
-            }
+                                    <div id="graf_file_name" class="flex-grow min-w-0 bg-none">
+                                        <span id="graf_file_text">Файл не выбран</span>
+                                        <span id="graf_file_size" class="=text-sm text-gray-500 ml-2"></span>
+                                    </div>
 
-            function unhighlight(area) {
-                area.classList.remove('dragover');
-            }
+                                    <!-- Кнопка изменения -->
+                                    <button type="button"
+                                            onclick="document.getElementById('graf_file').click()"
+                                            class="flex-shrink-0 bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap">
+                                        <i class="fas fa-exchange-alt mr-1"></i>Изменить
+                                    </button>
 
-            fileDropArea.addEventListener('drop', (e) => {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                fileInput.files = files;
-                updateFileName(files[0], fileNameDisplay, fileText, fileSize, fileDropArea, highlightColor);
-            }, false);
+                                    <!-- Скрытый input для файла -->
+                                    <input type="file"
+                                           id="graf_file"
+                                           name="graf_file"
+                                           class="hidden"
+                                           accept=".xlsx,.xls"
+                                           onchange="handleFileChange(this)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            fileInput.addEventListener('change', function () {
-                updateFileName(this.files[0], fileNameDisplay, fileText, fileSize, fileDropArea, highlightColor);
-            });
 
-            // Открытие файлового диалога при клике на область
-            fileDropArea.addEventListener('click', function(e) {
-                if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
-                    fileInput.click();
-                }
-            });
-        }
+                        <!-- ================================= -->
+                    <!-- Выпадающий список для бригады -->
+                    <div>
+                        <label for="brigade" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-users mr-2"></i>Бригада
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <select id="brigade"
+                                name="brigade"
+                                required
+                                class="w-full px-4 py-3 rounded-lg input-field cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white">
+                            <option value="" disabled selected>Выберите бригаду</option>
+                            <option value="1">"Руководитель"</option>
+                            <option value="2">"Сотрудник"</option>
+                        </select>
+                    </div>
+                </div>
 
-        // Инициализация drag and drop для обоих файлов
-        setupFileDrop('templateFileDropArea', 'template_file', 'template_file_name', 'templateFileText', 'templateFileSize', 'blue');
-        setupFileDrop('reportFileDropArea', 'report_table_file', 'report_file_name', 'reportFileText', 'reportFileSize', 'green');
+                <!-- Кнопки -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+                    <button type="submit"
+                            id="submitBtn"
+                            class="btn-primary text-white font-medium py-3 px-8 rounded-lg flex items-center justify-center space-x-2">
+                        <i class="fas fa-magic"></i>
+                        <span>Сгенерировать документ</span>
+                    </button>
 
-        function updateFileName(file, fileNameDisplay, fileText, fileSize, dropArea, color) {
-            if (file) {
-                fileNameDisplay.classList.remove('hidden');
-                fileText.textContent = file.name;
+                    <button type="button"
+                            onclick="downloadSample()"
+                            class="bg-gray-100 text-gray-800 font-medium py-3 px-8 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2">
+                        <i class="fas fa-download"></i>
+                        <span>Скачать пример шаблона</span>
+                    </button>
 
-                // Показываем размер файла
-                const size = formatFileSize(file.size);
-                fileSize.textContent = `(${size})`;
+                    <button type="button"
+                            onclick="resetForm()"
+                            class="bg-red-50 text-red-700 font-medium py-3 px-8 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center space-x-2">
+                        <i class="fas fa-redo"></i>
+                        <span>Очистить форму</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                // Удаляем все цветовые классы
-                dropArea.classList.remove('border-blue-400', 'bg-blue-50', 'border-green-400', 'bg-green-50', 'border-red-400', 'bg-red-50');
+    <!-- Футер -->
+    <footer class="mt-12 text-center text-white opacity-75">
+        <p>© 2024 Генератор Word-документов | FastAPI</p>
+        <p class="text-sm mt-2">Сервер запущен: <span id="serverAddress" class="font-mono"></span></p>
+    </footer>
+</div>
 
-                // Добавляем соответствующий цвет
-                if (color === 'blue') {
-                    dropArea.classList.add('border-blue-400', 'bg-blue-50');
-                } else if (color === 'green') {
-                    dropArea.classList.add('border-green-400', 'bg-green-50');
-                }
 
-                // Проверяем размер файла
-                if (file.size > 100 * 1024 * 1024) { // 100MB
-                    showError(`Файл слишком большой (${size}). Максимальный размер: 100MB`);
-                    dropArea.classList.add('border-red-400', 'bg-red-50');
-                }
-            }
-        }
+<script>
+    // Определение URL сервера
+    function getServerAddress() {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        const serverUrl = `${protocol}//${hostname}${port ? ':' + port : ''}`;
+        return serverUrl;
+    }
 
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
+    // Показываем адрес сервера в футере
+    document.getElementById('serverAddress').textContent = getServerAddress();
 
-        // Сброс формы
-        function resetForm() {
-            document.getElementById('documentForm').reset();
+    // Устанавливаем сегодняшнюю дату по умолчанию
+    const today = new Date().toISOString().split('T')[0];
 
-            // Скрываем все отображения файлов
-            document.getElementById('template_file_name').classList.add('hidden');
-            document.getElementById('report_file_name').classList.add('hidden');
+    // Функции для управления drag and drop
+    function setupFileDrop(areaId, inputId, fileNameId, fileTextId, fileSizeId, highlightColor) {
+        const fileDropArea = document.getElementById(areaId);
+        const fileInput = document.getElementById(inputId);
+        const fileNameDisplay = document.getElementById(fileNameId);
+        const fileText = document.getElementById(fileTextId);
+        const fileSize = document.getElementById(fileSizeId);
 
-            // Убираем цветовые классы с областей
-            document.getElementById('templateFileDropArea').classList.remove('border-blue-400', 'bg-blue-50', 'border-red-400', 'bg-red-50');
-            document.getElementById('reportFileDropArea').classList.remove('border-green-400', 'bg-green-50', 'border-red-400', 'bg-red-50');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, preventDefaults, false);
+        });
 
-            hideMessages();
-        }
-
-        // Скачивание примера шаблона
-        async function downloadSample() {
-            try {
-                showLoading();
-                const response = await fetch('/download_sample');
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'Пример_шаблона.xlsx';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-                    showSuccess('Пример шаблона скачивается...');
-                } else {
-                    const error = await response.json();
-                    showError(error.detail || 'Ошибка при скачивании шаблона');
-                }
-            } catch (error) {
-                showError('Ошибка сети: ' + error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Обработка формы
-        document.getElementById('documentForm').addEventListener('submit', async function (e) {
+        function preventDefaults(e) {
             e.preventDefault();
+            e.stopPropagation();
+        }
 
-            if (!validateForm()) {
-                return;
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, () => highlight(fileDropArea), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, () => unhighlight(fileDropArea), false);
+        });
+
+        function highlight(area) {
+            area.classList.add('dragover');
+        }
+
+        function unhighlight(area) {
+            area.classList.remove('dragover');
+        }
+
+        fileDropArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            updateFileName(files[0], fileNameDisplay, fileText, fileSize, fileDropArea, highlightColor);
+        }, false);
+
+        fileInput.addEventListener('change', function () {
+            updateFileName(this.files[0], fileNameDisplay, fileText, fileSize, fileDropArea, highlightColor);
+        });
+
+        // Открытие файлового диалога при клике на область
+        fileDropArea.addEventListener('click', function(e) {
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
+                fileInput.click();
+            }
+        });
+    }
+
+    // Инициализация drag and drop для обоих файлов
+    setupFileDrop('grafFileDropArea', 'graf_file', 'graf_file_name', 'graf_file_text', 'graf_file_size', 'green');
+
+    function updateFileName(file, fileNameDisplay, fileText, fileSize, dropArea, color) {
+        if (file) {
+            fileNameDisplay.classList.remove('hidden');
+            fileText.textContent = file.name;
+
+            // Показываем размер файла
+            const size = formatFileSize(file.size);
+            fileSize.textContent = `(${size})`;
+
+            // Удаляем все цветовые классы
+            dropArea.classList.remove('border-blue-400', 'bg-blue-50', 'border-green-400', 'bg-green-50', 'border-red-400', 'bg-red-50');
+
+            // Добавляем соответствующий цвет
+            if (color === 'blue') {
+                dropArea.classList.add('border-blue-400', 'bg-blue-50');
+            } else if (color === 'green') {
+                dropArea.classList.add('border-green-400', 'bg-green-50');
             }
 
-            try {
-                showLoading();
-                showProgress(10);
+            // Проверяем размер файла
+            if (file.size > 100 * 1024 * 1024) { // 100MB
+                showError(`Файл слишком большой (${size}). Максимальный размер: 100MB`);
+                dropArea.classList.add('border-red-400', 'bg-red-50');
+            }
 
-                const formData = new FormData(this);
+            if (dropArea.id === 'grafFileDropArea') {
+                uploadAndProcessFile(file, 'graf');
+                const iconElement = document.querySelector('#grafFileDropArea i');
+                iconElement.className = "fa fa-spinner fa-pulse text=2xl fa-fw"
+            }
+        }
+    }
 
-                showProgress(30);
+    async function uploadAndProcessFile(file, fileType) {
+        try {
+            const formData = new FormData();
+            formData.append('graf_file', file);
+            formData.append('file_type', fileType);
 
-                const response = await fetch('/generate', {
-                    method: 'POST',
-                    body: formData
-                });
+            const response = await fetch('/process_graf_file', {
+                method: 'POST',
+                body: formData
+            });
 
-                showProgress(70);
+            if (response.ok) {
+                const result = await response.json();
 
-                if (response.ok) {
-                    showProgress(90);
-                    const blob = await response.blob();
-                    showProgress(100);
+                if (result.success && fileType === 'graf') {
+                    // Обновляем выпадающий список с данными из файла
+                    updateSelectWithOptions(result.data);
+                }
+            } else {
+                const error = await response.json();
+                showError(`Ошибка обработки файла: ${error.detail}`);
+            }
+        } catch (error) {
+            showError('Ошибка сети: ' + error.message);
+        }
+    }
 
-                    // Создаем ссылку для скачивания
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
 
-                    // Получаем имя файла из заголовков
-                    const contentDisposition = response.headers.get('content-disposition');
-                    let filename = 'Документ.docx';
-                    if (contentDisposition) {
-                        const match = contentDisposition.match(/filename=(.+)/);
-                        if (match) filename = decodeURIComponent(match[1]);
-                    }
+    // Обновление выпадающего списка
+    function updateSelectWithOptions(options) {
+        const select = document.getElementById('TO_number');
+        select.innerHTML = '<option value="" disabled selected>Выберите номер ТО</option>';
 
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
+        options.forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option;
+            opt.textContent = option;
+            select.appendChild(opt);
+        });
+        select.remove(0);
 
-                    showSuccess('Документ успешно сгенерирован и скачивается!');
+        const iconElement = document.querySelector('#grafFileDropArea i');
+        iconElement.className = "fas fa-file-excel text-2xl text-green-400"
+    }
 
-                    // Скрываем прогресс через 2 секунды
-                    setTimeout(() => {
-                        hideProgress();
-                    }, 2000);
 
-                } else {
-                    const error = await response.json();
-                    showError(error.detail || `Ошибка сервера: ${response.status}`);
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Сброс формы
+    function resetForm() {
+        document.getElementById('documentForm').reset();
+
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.value = '';  // Это очищает файловое поле
+        });
+
+        // Чистим размеры файлов
+
+        document.getElementById('graf_file_size').textContent = "";
+
+        // Убираем цветовые классы с областей
+        document.getElementById('grafFileDropArea').classList.remove('border-green-400', 'bg-green-50', 'border-red-400', 'bg-red-50');
+
+        hideMessages();
+
+        clear_graf_file();
+    }
+
+    function clear_graf_file() {
+        document.getElementById('graf_file_text').textContent = "Файл не выбран";
+
+        const iconElement = document.querySelector('#grafFileDropArea i');
+        iconElement.className = "fas fa-file-excel text-2xl text-gray-400";
+
+        const select = document.getElementById('TO_number');
+
+        const options = select.querySelectorAll(`option`);
+
+        options.forEach(option => {
+            option.remove();
+        });
+
+        const opt = document.createElement('option');
+        opt.value = "";
+        opt.textContent = "Загрузите файл шаблона";
+        opt.disabled = true;
+        opt.selected = true;
+        select.appendChild(opt);
+    }
+
+    // Скачивание примера шаблона
+    async function downloadSample() {
+        try {
+            showLoading();
+            const response = await fetch('/download_sample');
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'Пример_шаблона.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showSuccess('Пример шаблона скачивается...');
+            } else {
+                const error = await response.json();
+                showError(error.detail || 'Ошибка при скачивании шаблона');
+            }
+        } catch (error) {
+            showError('Ошибка сети: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    // Обработка формы
+    document.getElementById('documentForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
+        try {
+            showLoading();
+            showProgress(10);
+
+            const formData = new FormData(this);
+
+            showProgress(30);
+
+            const response = await fetch('/generate', {
+                method: 'POST',
+                body: formData
+            });
+
+            showProgress(70);
+
+            if (response.ok) {
+                showProgress(90);
+                const blob = await response.blob();
+                showProgress(100);
+
+                // Создаем ссылку для скачивания
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+
+                // Получаем имя файла из заголовков
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = 'Документ.docx';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename=(.+)/);
+                    if (match) filename = decodeURIComponent(match[1]);
                 }
 
-            } catch (error) {
-                showError('Ошибка сети: ' + error.message);
-            } finally {
-                hideLoading();
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showSuccess('Документ успешно сгенерирован и скачивается!');
+
+                // Скрываем прогресс через 2 секунды
+                setTimeout(() => {
+                    hideProgress();
+                }, 2000);
+
+            } else {
+                const error = await response.json();
+                showError(error.detail || `Ошибка сервера: ${response.status}`);
+            }
+
+        } catch (error) {
+            showError('Ошибка сети: ' + error.message);
+        } finally {
+            hideLoading();
+        }
+    });
+
+    // Валидация формы
+    function validateForm() {
+        const requiredFields = document.querySelectorAll('[required]');
+        let isValid = true;
+
+        // Проверка текстовых полей
+        requiredFields.forEach(field => {
+            if (field.type !== 'file' && !field.value.trim()) {
+                field.classList.add('border-red-500');
+                isValid = false;
+            } else if (field.type !== 'file') {
+                field.classList.remove('border-red-500');
             }
         });
 
-        // Валидация формы
-        function validateForm() {
-            const requiredFields = document.querySelectorAll('[required]');
-            let isValid = true;
+        // Проверка файла шаблона
+        const grafFileInput = document.getElementById('graf_file');
 
-            // Проверка текстовых полей
-            requiredFields.forEach(field => {
-                if (field.type !== 'file' && !field.value.trim()) {
-                    field.classList.add('border-red-500');
-                    isValid = false;
-                } else if (field.type !== 'file') {
-                    field.classList.remove('border-red-500');
-                }
-            });
+        if (!grafFileInput.files.length) {
+            showError('Пожалуйста, выберите файл графика');
+            return false;
+        }
 
-            // Проверка файла шаблона
-            const templateFileInput = document.getElementById('template_file');
-            const reportFileInput = document.getElementById('report_table_file');
 
-            if (!templateFileInput.files.length) {
-                showError('Пожалуйста, выберите файл шаблона');
+        // Проверка расширений и размеров обоих файлов
+        const filesToCheck = [
+            {input: grafFileInput, name: 'графика'}
+        ];
+
+        for (const fileCheck of filesToCheck) {
+            const file = fileCheck.input.files[0];
+            if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                showError(`Файл ${fileCheck.name} должен быть в формате .xlsx`);
                 return false;
             }
 
-            if (!reportFileInput.files.length) {
-                showError('Пожалуйста, выберите таблицу отчета');
+            if (file.size > 100 * 1024 * 1024) {
+                showError(`Файл ${fileCheck.name} слишком большой. Максимальный размер: 100MB`);
                 return false;
             }
+        }
 
-            // Проверка расширений и размеров обоих файлов
-            const filesToCheck = [
-                {input: templateFileInput, name: 'шаблона'},
-                {input: reportFileInput, name: 'отчета'}
-            ];
+        if (!isValid) {
+            showError('Пожалуйста, заполните все обязательные поля');
+            return false;
+        }
 
-            for (const fileCheck of filesToCheck) {
-                const file = fileCheck.input.files[0];
-                if (!file.name.toLowerCase().endsWith('.xlsx')) {
-                    showError(`Файл ${fileCheck.name} должен быть в формате .xlsx`);
-                    return false;
-                }
+        return true;
+    }
 
-                if (file.size > 100 * 1024 * 1024) {
-                    showError(`Файл ${fileCheck.name} слишком большой. Максимальный размер: 100MB`);
-                    return false;
-                }
+    // Утилиты для сообщений
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        errorText.textContent = message;
+        errorDiv.classList.remove('hidden');
+        document.getElementById('successMessage').classList.add('hidden');
+    }
+
+    function showSuccess(message) {
+        const successDiv = document.getElementById('successMessage');
+        const successText = document.getElementById('successText');
+        successText.textContent = message;
+        successDiv.classList.remove('hidden');
+        document.getElementById('errorMessage').classList.add('hidden');
+    }
+
+    function hideMessages() {
+        document.getElementById('errorMessage').classList.add('hidden');
+        document.getElementById('successMessage').classList.add('hidden');
+    }
+
+    function showLoading() {
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Обработка...</span>';
+        btn.disabled = true;
+    }
+
+    function hideLoading() {
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = '<i class="fas fa-magic mr-2"></i><span>Сгенерировать документ</span>';
+        btn.disabled = false;
+    }
+
+    function showProgress(percent) {
+        document.getElementById('progressContainer').classList.remove('hidden');
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressPercent').textContent = percent + '%';
+    }
+
+    function hideProgress() {
+        document.getElementById('progressContainer').classList.add('hidden');
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressPercent').textContent = '0%';
+    }
+
+    // Очистка ошибок при вводе
+    document.querySelectorAll('input, select').forEach(field => {
+        field.addEventListener('input', function () {
+            if (this.value.trim()) {
+                this.classList.remove('border-red-500');
+                hideMessages();
             }
-
-            if (!isValid) {
-                showError('Пожалуйста, заполните все обязательные поля');
-                return false;
-            }
-
-            return true;
-        }
-
-        // Утилиты для сообщений
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            const errorText = document.getElementById('errorText');
-            errorText.textContent = message;
-            errorDiv.classList.remove('hidden');
-            document.getElementById('successMessage').classList.add('hidden');
-        }
-
-        function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            const successText = document.getElementById('successText');
-            successText.textContent = message;
-            successDiv.classList.remove('hidden');
-            document.getElementById('errorMessage').classList.add('hidden');
-        }
-
-        function hideMessages() {
-            document.getElementById('errorMessage').classList.add('hidden');
-            document.getElementById('successMessage').classList.add('hidden');
-        }
-
-        function showLoading() {
-            const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span>Обработка...</span>';
-            btn.disabled = true;
-        }
-
-        function hideLoading() {
-            const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<i class="fas fa-magic mr-2"></i><span>Сгенерировать документ</span>';
-            btn.disabled = false;
-        }
-
-        function showProgress(percent) {
-            document.getElementById('progressContainer').classList.remove('hidden');
-            document.getElementById('progressBar').style.width = percent + '%';
-            document.getElementById('progressPercent').textContent = percent + '%';
-        }
-
-        function hideProgress() {
-            document.getElementById('progressContainer').classList.add('hidden');
-            document.getElementById('progressBar').style.width = '0%';
-            document.getElementById('progressPercent').textContent = '0%';
-        }
-
-        // Очистка ошибок при вводе
-        document.querySelectorAll('input, select').forEach(field => {
-            field.addEventListener('input', function () {
-                if (this.value.trim()) {
-                    this.classList.remove('border-red-500');
-                    hideMessages();
-                }
-            });
         });
-    </script>
+    });
+</script>
 </body>
 </html>
