@@ -8,11 +8,17 @@ from docx import Document
 
 import pandas as pd
 
+from db import DatabaseManager
+
 app = Flask(
     __name__,
     static_folder="static",
     template_folder="templates"
 )
+
+print("initializing db")
+db = DatabaseManager()
+print("db is ready")
 
 BASE_DIR = Path(__file__).parent
 UPLOAD_DIR = BASE_DIR / "uploads"
@@ -112,22 +118,22 @@ class WordTemplateProcessor:
             return
 
         runs = list(paragraph.runs)
-        print([i.text for i in runs])
+        # print([i.text for i in runs])
 
         #print("STARTING", ['' for i in paragraph.runs])
         if not any('{{' in i.text for i in runs):
             return
 
-        print("DO REPLACE")
+        # print("DO REPLACE")
 
         for i in range(len(runs)):
             if '{{' in runs[i].text and '}}' in runs[i].text:
-                print("FOUND ONE VAR IN:", runs[i].text)
+                # print("FOUND ONE VAR IN:", runs[i].text)
                 for key, val in self.replacements.items():
                     if key in runs[i].text:
-                        print("VAR IS:", key)
+                        # print("VAR IS:", key)
                         paragraph.runs[i].text = paragraph.runs[i].text.replace(key, str(val))
-                        print("REPLACE SUCCESS")
+                        # print("REPLACE SUCCESS")
 
         i = 0
         while i < len(runs) - 2:
@@ -269,6 +275,8 @@ def generate_document():
         year_of_commissioning = datetime.fromisoformat(csv[row_index][13]).year
         diagnostic_date = datetime.fromisoformat(csv[row_index][19]).strftime("%d.%m.%Y")
 
+        leader_surname = csv[row_index][21]
+
         # HZ NOMERNAYA TABLE
         #number_table = request.files.get("report_table_file")
 
@@ -279,6 +287,48 @@ def generate_document():
         #enter_lay_csv = [i.split(';') for i in enter_lay_csv]
 
         #full_pipline_name = enter_lay_csv[0][2]
+        # ----------------------------------------------------------
+        # DATABASE
+
+        print("LEADER SURNAME:", leader_surname)
+
+        leader = None # Employer class
+        employees = db.get_all_employees()
+        for employer in employees:
+            print("db surname:", employer.surname)
+            if employer.surname == leader_surname:
+                leader = employer
+                break
+        else:
+            raise "Leader not found"
+
+        team_number = leader.team_number
+        leader_full = leader.surname + " " + leader.name + " " + leader.lastname
+        leader_short = leader.name[0] + ". " + leader.lastname[0] + ". " + leader.surname
+        leader_position = leader.position
+        leader_license = leader.license
+
+        # team_members = [] если вдруг команда будет состоять больше чем из 2 человек
+        worker = None # Employer class
+        for employer in employees:
+            if employer.team_number == team_number and employer.id != leader.id:
+                worker = employer
+                break
+
+        worker_full = worker.surname + " " + worker.name + " " + worker.lastname
+        worker_short = worker.name[0] + ". " + worker.lastname[0] + ". " + worker.surname
+        worker_position = worker.position
+        worker_license = worker.license
+        print("L_F:", leader_full)
+        print("L_S:", leader_short)
+        print("L_Pos:", leader_position)
+        print("L_Lic:", leader_license)
+
+        print("W_F:", worker_full)
+        print("W_S:", worker_short)
+        print("W_Pos:", worker_position)
+        print("W_Lic", worker_license)
+
         # ----------------------------------------------------------
         replacements = {
             '{{curr_year}}': curr_year,
@@ -298,6 +348,16 @@ def generate_document():
             '{{wall_diam}}': wall_diam,
             '{{wall_thic}}': wall_thic,
             '{{year_of_commissioning}}': year_of_commissioning, # эксплуатации
+
+            '{{leader_full}}': leader_full, # Иванов Иван Иванович
+            '{{leader_short}}': leader_short, # Иванов И. И.
+            '{{leader_position}}': leader_position,
+            '{{leader_license}}': leader_license,
+
+            '{{worker_full}}': worker_full,
+            '{{worker_short}}': worker_short,
+            '{{worker_position}}': worker_position,
+            '{{worker_license}}': worker_license,
 
             '{{full_pipline_name}}': pipline_name
         }
@@ -323,6 +383,7 @@ def generate_document():
         )
     except Exception as e:
         return {"detail": f"Ошибка сервера: {str(e)}"}, 500
+
 
 
 @app.route("/process_graf_file", methods=["POST"])
@@ -405,6 +466,10 @@ def upload_file():
         as_attachment=True,
         download_name=original_filename
     )
+
+@app.route("/get_teams_list", methods=["GET"])
+def get_teams_list():
+    db.get_all_employees()
 
 
 @app.route("/download_sample", methods=["GET"])
