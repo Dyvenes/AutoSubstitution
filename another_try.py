@@ -155,15 +155,16 @@ class WordTemplateProcessor:
                 new_text = runs[i].text
 
 
-                paragraph.runs[i].text = ''
+                # paragraph.runs[i].text = ''
 
                 var = str()
 
                 while '}}' != new_text.strip():
                     var += new_text
+                    paragraph.runs[i].text = ''
                     i += 1
                     new_text = runs[i].text
-                    paragraph.runs[i].text = ''
+                paragraph.runs[i].text = paragraph.runs[i].text.replace('}}', '')
 
                 for key, value in self.replacements.items():
                     clear_key = key.replace('{{', '')
@@ -221,6 +222,9 @@ def generate_document():
 
         grafic = request.files.get("graf_file")
         report_number = request.form.get("TO_number")
+
+        pipline_type = request.form.get("pipline_type")
+        pipline_name = request.form.get("pipline_name")
         print("GOT VALUES")
 
         # template_file вы сейчас игнорируете и всегда берете TEMPLATE_PATH
@@ -266,7 +270,7 @@ def generate_document():
         deposit = csv[row_index][3]
         workshop = csv[row_index][4]
         inventory_number = csv[row_index][5]
-        pipline_name = csv[row_index][7]
+        # pipline_name = csv[row_index][7]
         length_of_pipline = csv[row_index][11]
         length_of_area = csv[row_index][12]
         wall_diam = csv[row_index][9]
@@ -335,7 +339,11 @@ def generate_document():
             '{{report_number}}': report_number,
             '{{rep_num}}': report_number,
             '{{year_short}}': year_short,
+
             '{{pipline_name}}': pipline_name,  # временно
+            '{{pipline_type}}': pipline_type,
+            '{{full_pipline_name}}': f'{pipline_type} «{pipline_name}»',
+
             '{{inventory_number}}': inventory_number,
             '{{deposit}}': deposit,
             '{{workshop}}': workshop,
@@ -358,8 +366,6 @@ def generate_document():
             '{{worker_short}}': worker_short,
             '{{worker_position}}': worker_position,
             '{{worker_license}}': worker_license,
-
-            '{{full_pipline_name}}': pipline_name
         }
 
         processor = WordTemplateProcessor(str(TEMPLATE_PATH))
