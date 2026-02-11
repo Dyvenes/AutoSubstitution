@@ -10,15 +10,28 @@ import pandas as pd
 
 from db import DatabaseManager
 
+import logging
+import sys
+
+# Настройка логирования (добавьте после импортов)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),  # В systemd
+    ]
+)
+logger = logging.getLogger(__name__)
+
 app = Flask(
     __name__,
     static_folder="static",
     template_folder="templates"
 )
 
-print("initializing db")
+logger.info("initializing db")
 db = DatabaseManager()
-print("db is ready")
+logger.info("db is ready")
 
 BASE_DIR = Path(__file__).parent
 UPLOAD_DIR = BASE_DIR / "uploads"
@@ -118,22 +131,22 @@ class WordTemplateProcessor:
             return
 
         runs = list(paragraph.runs)
-        # print([i.text for i in runs])
+        # logger.info([i.text for i in runs])
 
-        #print("STARTING", ['' for i in paragraph.runs])
+        #logger.info("STARTING", ['' for i in paragraph.runs])
         if not any('{{' in i.text for i in runs):
             return
 
-        # print("DO REPLACE")
+        # logger.info("DO REPLACE")
 
         for i in range(len(runs)):
             if '{{' in runs[i].text and '}}' in runs[i].text:
-                # print("FOUND ONE VAR IN:", runs[i].text)
+                # logger.info("FOUND ONE VAR IN:", runs[i].text)
                 for key, val in self.replacements.items():
                     if key in runs[i].text:
-                        # print("VAR IS:", key)
+                        # logger.info("VAR IS:", key)
                         paragraph.runs[i].text = paragraph.runs[i].text.replace(key, str(val))
-                        # print("REPLACE SUCCESS")
+                        # logger.info("REPLACE SUCCESS")
 
         i = 0
         while i < len(runs) - 2:
@@ -209,7 +222,7 @@ class WordTemplateProcessor:
 
 @app.route("/", methods=["GET"])
 def read_root():
-    print("IN GET")
+    logger.info("IN GET")
     return render_template("index.html")
 
 
@@ -217,7 +230,7 @@ def read_root():
 def generate_document():
     """Генерация документа с заменой плейсхолдеров"""
     try:
-        print("GENERATING")
+        logger.info("GENERATING")
         filename = request.form.get("filename")  # TODO потом генерировать автоматически??
 
         grafic = request.files.get("graf_file")
@@ -230,13 +243,13 @@ def generate_document():
         pressure_work = request.form.get("pressure_work")
         pressure_project = request.form.get("pressure_project")
         insulation = request.form.get('insulation')
-        print("INSULATION:", insulation)
+        logger.info("INSULATION:", insulation)
         anticor = request.form.get("anticor")
         inside_cover = request.form.get("inside_cover")
         welding = request.form.get("welding")
         project_documentation = request.form.get("project_documentation")
         installation_company = request.form.get("installation_company")
-        print("GOT VALUES")
+        logger.info("GOT VALUES")
 
         # template_file вы сейчас игнорируете и всегда берете TEMPLATE_PATH
         # Если нужно использовать загруженный шаблон, можно сохранить его и
@@ -247,7 +260,7 @@ def generate_document():
         curr_year = str(datetime.now().year)
         year_short = curr_year[-2:]
 
-        print("CURR_YEAR: ", curr_year)
+        logger.info("CURR_YEAR: ", curr_year)
         # --------------------------------------------------------
         # EXCEL
 
@@ -263,14 +276,14 @@ def generate_document():
 
         row_index = 0
 
-        print("GOT REPORT_NUMBER:", report_number)
+        logger.info("GOT REPORT_NUMBER:", report_number)
         for row in range(len(csv)):
             if report_number in csv[row]:
                 row_index = row
 
         end = time.time()
 
-        print("Time = ", end - start)
+        logger.info("Time = ", end - start)
 
         # excel = win32com.client.Dispatch("Excel.Application")
         # excel.Visible = False  # Скрыть Excel
@@ -297,21 +310,21 @@ def generate_document():
         #number_table = request.files.get("report_table_file")
 
         #enter_lay = pd.read_excel(number_table, sheet_name="Ввод данных", nrows=20, dtype=str, engine='openpyxl')
-        #print("FILE READED")
+        #logger.info("FILE READED")
         #enter_lay_csv = enter_lay.to_csv(sep=';').split('\r\n', )
-        #print(enter_lay_csv)
+        #logger.info(enter_lay_csv)
         #enter_lay_csv = [i.split(';') for i in enter_lay_csv]
 
         #full_pipline_name = enter_lay_csv[0][2]
         # ----------------------------------------------------------
         # DATABASE
 
-        print("LEADER SURNAME:", leader_surname)
+        logger.info("LEADER SURNAME:", leader_surname)
 
         leader = None # Employer class
         employees = db.get_all_employees()
         for employer in employees:
-            print("db surname:", employer.surname)
+            logger.info("db surname:", employer.surname)
             if employer.surname == leader_surname:
                 leader = employer
                 break
@@ -335,15 +348,15 @@ def generate_document():
         worker_short = worker.name[0] + ". " + worker.lastname[0] + ". " + worker.surname
         worker_position = worker.position
         worker_license = worker.license
-        print("L_F:", leader_full)
-        print("L_S:", leader_short)
-        print("L_Pos:", leader_position)
-        print("L_Lic:", leader_license)
+        logger.info("L_F:", leader_full)
+        logger.info("L_S:", leader_short)
+        logger.info("L_Pos:", leader_position)
+        logger.info("L_Lic:", leader_license)
 
-        print("W_F:", worker_full)
-        print("W_S:", worker_short)
-        print("W_Pos:", worker_position)
-        print("W_Lic", worker_license)
+        logger.info("W_F:", worker_full)
+        logger.info("W_S:", worker_short)
+        logger.info("W_Pos:", worker_position)
+        logger.info("W_Lic", worker_license)
 
         # ----------------------------------------------------------
         replacements = {
@@ -392,14 +405,14 @@ def generate_document():
         }
 
         processor = WordTemplateProcessor(str(TEMPLATE_PATH))
-        print("CREATED FILE")
+        logger.info("CREATED FILE")
         processor.set_replacements(replacements)
-        print("SET REPLACEMENTS")
+        logger.info("SET REPLACEMENTS")
         processor.process_document()
-        print("PROCESS")
+        logger.info("PROCESS")
 
         output_filename = f'{filename}.docx'
-        print("FILE NAME:", output_filename)
+        logger.info("FILE NAME:", output_filename)
 
         output_path = OUTPUT_DIR / output_filename
         processor.doc.save(output_path)
@@ -417,7 +430,7 @@ def generate_document():
 
 @app.route("/process_graf_file", methods=["POST"])
 def process_graf_file():
-    print("PROCESSING FILE")
+    logger.info("PROCESSING FILE")
     file = request.files.get("graf_file")
 
     file.save("data/graf.xlsx") # ?если файл не подходящего формата, то надо его удалить?
@@ -444,10 +457,10 @@ def process_graf_file():
             "error": "Неизвестный формат файла"
         }, 500
 
-    print("ROW:", row, "COL:", col)
+    logger.info("ROW:", row, "COL:", col)
 
     options = [csv[i_r][col] for i_r in range(row, len(csv)) if (len(csv[i_r]) > 2 and csv[i_r][col] != '')]
-    print("NUMERS:", options)
+    logger.info("NUMERS:", options)
     return {
         "success": True,
         "data": options,
@@ -468,7 +481,7 @@ def preload_files():
         files = []
         for file_name in files_names:
             files.append(file_name.split(';')[0])
-        print("PRELOADING FILENAMES:", files)
+        logger.info("PRELOADING FILENAMES:", files)
         return {
             "success": True,
             "files": files
@@ -478,10 +491,10 @@ def preload_files():
 def upload_file():
 
     filename = request.args.get('name')
-    print(filename)
+    logger.info(filename)
 
     file_path = DATA_DIR / filename
-    print("UPLOADING FILE:", file_path)
+    logger.info("UPLOADING FILE:", file_path)
 
     original_filename = 'file not exist'
     with open('data/date_manager.txt', 'r') as manager:
