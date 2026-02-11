@@ -243,7 +243,7 @@ def generate_document():
         pressure_work = request.form.get("pressure_work")
         pressure_project = request.form.get("pressure_project")
         insulation = request.form.get('insulation')
-        logger.info("INSULATION:", insulation)
+        logger.info("INSULATION: " + str(insulation))
         anticor = request.form.get("anticor")
         inside_cover = request.form.get("inside_cover")
         welding = request.form.get("welding")
@@ -260,7 +260,7 @@ def generate_document():
         curr_year = str(datetime.now().year)
         year_short = curr_year[-2:]
 
-        logger.info("CURR_YEAR: ", curr_year)
+        logger.info("CURR_YEAR: " + str(curr_year))
         # --------------------------------------------------------
         # EXCEL
 
@@ -276,14 +276,14 @@ def generate_document():
 
         row_index = 0
 
-        logger.info("GOT REPORT_NUMBER:", report_number)
+        logger.info("GOT REPORT_NUMBER: " + str(report_number))
         for row in range(len(csv)):
             if report_number in csv[row]:
                 row_index = row
 
         end = time.time()
 
-        logger.info("Time = ", end - start)
+        logger.info("Time = " + str(end - start))
 
         # excel = win32com.client.Dispatch("Excel.Application")
         # excel.Visible = False  # Скрыть Excel
@@ -319,12 +319,12 @@ def generate_document():
         # ----------------------------------------------------------
         # DATABASE
 
-        logger.info("LEADER SURNAME:", leader_surname)
+        logger.info("LEADER SURNAME: " + str(leader_surname))
 
         leader = None # Employer class
         employees = db.get_all_employees()
         for employer in employees:
-            logger.info("db surname:", employer.surname)
+            logger.info("db surname: " + str(employer.surname))
             if employer.surname == leader_surname:
                 leader = employer
                 break
@@ -348,15 +348,15 @@ def generate_document():
         worker_short = worker.name[0] + ". " + worker.lastname[0] + ". " + worker.surname
         worker_position = worker.position
         worker_license = worker.license
-        logger.info("L_F:", leader_full)
-        logger.info("L_S:", leader_short)
-        logger.info("L_Pos:", leader_position)
-        logger.info("L_Lic:", leader_license)
+        logger.info("L_F: " + str(leader_full))
+        logger.info("L_S: " + str(leader_short))
+        logger.info("L_Pos: " + str(leader_position))
+        logger.info("L_Lic: " + str(leader_license))
 
-        logger.info("W_F:", worker_full)
-        logger.info("W_S:", worker_short)
-        logger.info("W_Pos:", worker_position)
-        logger.info("W_Lic", worker_license)
+        logger.info("W_F: " + str(worker_full))
+        logger.info("W_S: " + str(worker_short))
+        logger.info("W_Pos: " + str(worker_position))
+        logger.info("W_Lic: " + str(worker_license))
 
         # ----------------------------------------------------------
         replacements = {
@@ -412,7 +412,7 @@ def generate_document():
         logger.info("PROCESS")
 
         output_filename = f'{filename}.docx'
-        logger.info("FILE NAME:", output_filename)
+        logger.info("FILE NAME: " + str(output_filename))
 
         output_path = OUTPUT_DIR / output_filename
         processor.doc.save(output_path)
@@ -457,10 +457,10 @@ def process_graf_file():
             "error": "Неизвестный формат файла"
         }, 500
 
-    logger.info("ROW:", row, "COL:", col)
+    logger.info("ROW: " + str(row) + " COL: " + str(col))
 
     options = [csv[i_r][col] for i_r in range(row, len(csv)) if (len(csv[i_r]) > 2 and csv[i_r][col] != '')]
-    logger.info("NUMERS:", options)
+    logger.info("NUMERS: " + str(options))
     return {
         "success": True,
         "data": options,
@@ -481,7 +481,7 @@ def preload_files():
         files = []
         for file_name in files_names:
             files.append(file_name.split(';')[0])
-        logger.info("PRELOADING FILENAMES:", files)
+        logger.info("PRELOADING FILENAMES: " + str(files))
         return {
             "success": True,
             "files": files
@@ -491,10 +491,10 @@ def preload_files():
 def upload_file():
 
     filename = request.args.get('name')
-    logger.info(filename)
+    logger.info(str(filename))
 
     file_path = DATA_DIR / filename
-    logger.info("UPLOADING FILE:", file_path)
+    logger.info("UPLOADING FILE: " + str(file_path))
 
     original_filename = 'file not exist'
     with open('data/date_manager.txt', 'r') as manager:
