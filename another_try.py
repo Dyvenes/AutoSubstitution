@@ -225,6 +225,17 @@ def generate_document():
 
         pipline_type = request.form.get("pipline_type")
         pipline_name = request.form.get("pipline_name")
+
+        temperature = request.form.get("temperature")
+        pressure_work = request.form.get("pressure_work")
+        pressure_project = request.form.get("pressure_project")
+        insulation = request.form.get('insulation')
+        print("INSULATION:", insulation)
+        anticor = request.form.get("anticor")
+        inside_cover = request.form.get("inside_cover")
+        welding = request.form.get("welding")
+        project_documentation = request.form.get("project_documentation")
+        installation_company = request.form.get("installation_company")
         print("GOT VALUES")
 
         # template_file вы сейчас игнорируете и всегда берете TEMPLATE_PATH
@@ -277,6 +288,7 @@ def generate_document():
         wall_thic = str(float(csv[row_index][10])).replace('.', ',')
         wall_params = f"{wall_diam}x{wall_thic}"
         year_of_commissioning = datetime.fromisoformat(csv[row_index][13]).year
+        year_of_using = datetime.now().year - year_of_commissioning
         diagnostic_date = datetime.fromisoformat(csv[row_index][19]).strftime("%d.%m.%Y")
 
         leader_surname = csv[row_index][21]
@@ -356,6 +368,7 @@ def generate_document():
             '{{wall_diam}}': wall_diam,
             '{{wall_thic}}': wall_thic,
             '{{year_of_commissioning}}': year_of_commissioning, # эксплуатации
+            '{{years_of_using}}': year_of_using,
 
             '{{leader_full}}': leader_full, # Иванов Иван Иванович
             '{{leader_short}}': leader_short, # Иванов И. И.
@@ -366,6 +379,16 @@ def generate_document():
             '{{worker_short}}': worker_short,
             '{{worker_position}}': worker_position,
             '{{worker_license}}': worker_license,
+
+            '{{temperature}}': temperature,
+            '{{pressure_work}}': pressure_work,
+            '{{pressure_project}}': pressure_project,
+            '{{insulation}}': insulation,
+            '{{anticor}}': anticor,
+            '{{inside_cover}}': inside_cover,
+            '{{welding}}': welding,
+            '{{project_documentation}}': project_documentation,
+            '{{installation_company}}': installation_company
         }
 
         processor = WordTemplateProcessor(str(TEMPLATE_PATH))

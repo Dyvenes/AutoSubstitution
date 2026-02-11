@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker, relationship, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
 
-from control_db import employees
 
 # Загружаем переменные окружения
 load_dotenv()

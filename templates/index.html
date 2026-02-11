@@ -13,6 +13,104 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+
+    /* Стили для радио-кнопок теплоизоляции */
+.insulation-option input:checked + label {
+    border-color: #667eea;
+    background-color: #f0f3ff;
+    box-shadow: 0 0 0 1px #667eea;
+}
+
+.insulation-option input:checked + label .custom-radio {
+    border-color: #667eea;
+    background-color: #667eea;
+}
+
+.insulation-option input:checked + label .radio-dot {
+    transform: scale(1);
+    background-color: white;
+}
+
+.insulation-option input:checked + label i {
+    opacity: 1;
+}
+
+.insulation-option input:focus + label {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Специфичные стили для каждого варианта */
+#insulation_yes:checked + label {
+    border-color: #10b981;
+    background-color: #f0f9ff;
+}
+
+#insulation_yes:checked + label .custom-radio {
+    border-color: #10b981;
+    background-color: #10b981;
+}
+
+#insulation_no:checked + label {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+#insulation_no:checked + label .custom-radio {
+    border-color: #ef4444;
+    background-color: #ef4444;
+}
+
+#insulation_partial:checked + label {
+    border-color: #f59e0b;
+    background-color: #fffbeb;
+}
+
+#insulation_partial:checked + label .custom-radio {
+    border-color: #f59e0b;
+    background-color: #f59e0b;
+}
+
+/* Анимация для радио-точек */
+.radio-dot {
+    transform: scale(0);
+    transition: transform 0.2s ease;
+}
+
+/* Улучшение hover-эффектов */
+.insulation-option label:hover .custom-radio {
+    border-color: #9ca3af;
+}
+
+#insulation_yes:checked + label:hover {
+    border-color: #059669;
+}
+
+#insulation_no:checked + label:hover {
+    border-color: #dc2626;
+}
+
+#insulation_partial:checked + label:hover {
+    border-color: #d97706;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .insulation-option label {
+        padding: 12px;
+    }
+
+    .insulation-option .custom-radio {
+        width: 20px;
+        height: 20px;
+    }
+
+    .insulation-option .radio-dot {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
@@ -212,8 +310,162 @@
                         </div>
                     </div>
 
-
                         <!-- ================================= -->
+
+                    <div>
+                        <label for="temperature" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i></i>Температура рабочая, *С
+                        </label>
+                        <input type="text"
+                            id="temperature"
+                            name="temperature"
+                            required
+                            class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="10">
+                    </div>
+
+                    <div>
+                        <label for="pressure_work" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i></i>Давление рабоее, МПа
+                        </label>
+                        <input type="text"
+                            id="pressure_work"
+                            name="pressure_work"
+                            required
+                            class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="16,0">
+                    </div>
+
+                    <div>
+                        <label for="pressure_project" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i></i>Давление проектное, МПа
+                        </label>
+                        <input type="text"
+                            id="pressure_project"
+                            name="pressure_project"
+                            required
+                            class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="16,0">
+                    </div>
+
+                    <!-- Вставьте этот блок после поля "Название трубопровода" -->
+
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            <i class="fas fa-thermometer-half mr-2"></i>Теплоизоляция
+                        </label>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Вариант 1: Теплоизоляция есть -->
+                            <div class="insulation-option relative">
+                                <input type="radio"
+                                       id="insulation_yes"
+                                       name="insulation"
+                                       value="Присутствует"
+                                       required
+                                       class="absolute opacity-0 w-0 h-0">
+
+                                <label for="insulation_yes"
+                                       class="flex items-center justify-between p-4 rounded-lg border-2 border-gray-200 cursor-pointer transition-all duration-200 hover:border-blue-400 hover:bg-blue-50 hover:shadow-sm">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="custom-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                            <div class="radio-dot w-3 h-3 rounded-full bg-white transition-all duration-200"></div>
+                                        </div>
+                                        <div>
+                                            <span class="font-medium text-gray-800">Есть теплоизоляция</span>
+                                            <p class="text-xs text-gray-500 mt-1">Трубопровод имеет полную теплоизоляцию</p>
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-check-circle text-blue-500 text-xl opacity-0 transition-opacity duration-200"></i>
+                                </label>
+                            </div>
+
+                            <!-- Вариант 2: Теплоизоляции нет -->
+                            <div class="insulation-option relative">
+                                <input type="radio"
+                                       id="insulation_no"
+                                       name="insulation"
+                                       value="Отсутствует"
+                                       required
+                                       class="absolute opacity-0 w-0 h-0">
+
+                                <label for="insulation_no"
+                                       class="flex items-center justify-between p-4 rounded-lg border-2 border-gray-200 cursor-pointer transition-all duration-200 hover:border-red-400 hover:bg-red-50 hover:shadow-sm">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="custom-radio w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                            <div class="radio-dot w-3 h-3 rounded-full bg-white transition-all duration-200"></div>
+                                        </div>
+                                        <div>
+                                            <span class="font-medium text-gray-800">Нет теплоизоляции</span>
+                                            <p class="text-xs text-gray-500 mt-1">Трубопровод без теплоизоляции</p>
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-times-circle text-red-500 text-xl opacity-0 transition-opacity duration-200"></i>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div>
+                        <label for="anticor" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i></i>Антикоррозийное покрытие
+                        </label>
+                        <input type="text"
+                            id="anticor"
+                            name="anticor"
+                            required
+                            class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Лакокрасочное покрытие, лента ПВХ">
+                    </div>
+
+                    <div>
+                        <label for="inside_cover" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i></i>Внутреннее покрытие
+                        </label>
+                        <input type="text"
+                            id="inside_cover"
+                            name="inside_cover"
+                            required
+                            class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Отсутствует">
+                    </div>
+
+                    <div>
+                        <label for="welding" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i></i>Род сварки
+                        </label>
+                        <input type="text"
+                            id="welding"
+                            name="welding"
+                            required
+                            class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="РЭДС">
+                    </div>
+
+                    <div>
+                        <label for="project_documentation" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i></i>Проектная и исполнительная документация на трубопровод
+                        </label>
+                        <input type="text"
+                            id="project_documentation"
+                            name="project_documentation"
+                            required
+                            class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="БашНИПИнефть">
+                    </div>
+
+                    <div>
+                        <label for="installation_company" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i></i>Монтажная организация
+                        </label>
+                        <input type="text"
+                            id="installation_company"
+                            name="installation_company"
+                            required
+                            class="w-full px-4 py-3 rounded-lg input-field focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="ООО «РН-Ремонт НПО»">
+                    </div>
                 </div>
 
                 <!-- Кнопки -->
@@ -229,7 +481,7 @@
                             onclick="downloadSample()"
                             class="bg-gray-100 text-gray-800 font-medium py-3 px-8 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2">
                         <i class="fas fa-download"></i>
-                        <span>Скачать пример шаблона</span>
+                        <span>Скачать шаблон</span>
                     </button>
 
                     <button type="button"
@@ -666,6 +918,22 @@
         if (!isValid) {
             showError('Пожалуйста, заполните все обязательные поля');
             return false;
+        }
+
+         // Проверка поля теплоизоляции
+        const insulationChecked = document.querySelector('input[name="insulation"]:checked');
+        if (!insulationChecked) {
+            showError('Пожалуйста, выберите состояние теплоизоляции');
+            // Добавляем красную рамку всем опциям
+            document.querySelectorAll('.insulation-option label').forEach(label => {
+                label.classList.add('border-red-500');
+            });
+            return false;
+        } else {
+            // Убираем красные рамки если выбрано
+            document.querySelectorAll('.insulation-option label').forEach(label => {
+                label.classList.remove('border-red-500');
+            });
         }
 
         return true;
