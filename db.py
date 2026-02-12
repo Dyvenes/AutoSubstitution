@@ -37,6 +37,7 @@ class Employee(Base):
     position = Column(String(100), nullable=False, default="Специалист НК II уровня")
     license = Column(String(100), nullable=False)
     license_number = Column(String(100), nullable=False)
+    instrument_table = Column(String, default=None)
 
     # Связь с позициями - исправлено lazy loading
     # licenses = relationship("License", back_populates="employee", lazy='joined')
@@ -48,6 +49,7 @@ class Employee(Base):
         info['name'] = self.name
         info['surname'] = self.surname
         info['team_number'] = self.team_number
+        info['table'] = self.instrument_table
         return info
 
 
@@ -100,7 +102,7 @@ class DatabaseManager:
         """Возвращает сессию для работы с базой данных"""
         return self.SessionLocal()
 
-    def add_employee(self, name, surname, team_number, license_name, lastname=None, position="Специалист НК II уровня", license_number="NONE"):
+    def add_employee(self, name, surname, team_number, license_name, lastname=None, instrument_table = None, position="Специалист НК II уровня", license_number="NONE"):
         """Добавляет нового сотрудника"""
         session = self.get_session()
         try:
@@ -111,7 +113,8 @@ class DatabaseManager:
                 team_number=team_number,
                 position=position,
                 license=license_name,
-                license_number=license_number
+                license_number=license_number,
+                instrument_table=instrument_table
             )
 
             session.add(employee)
@@ -320,12 +323,21 @@ if __name__ == "__main__":
     db.create_tables()
     #
     # # Добавляем сотрудников
+    #----------------------------------------------------------
     print("\nДобавление сотрудников...")
-    emp1 = db.add_employee("Наиль", "Тажитдинов", 2, "уд. № 0069-0377 по УК, ВИК до 01.03.2026;\nпо ЭК до 01.03.2027.", "Азаматович")
-    emp2 = db.add_employee("Артур", "Салимов", 2, "уд. № 0069-0963 по ВИК, УК до 30.04.2028.", "Рустемович")
-    emp3 = db.add_employee("Вячеслав", "Парфенов", 1, "уд. № НОАП-0069-0425 по УК до 29.03.2027;\nуд. № 0042-5807 по ПВК, МК, ВИК до 28.02.2028.", "Федорович")
-    emp4 = db.add_employee("Пономаренко", "Денис", 1, "уд. № 0042-5805 по УК, МК, ПВК, ВИК до 28.02.2028.", "Витальевич")
-    db.print_all_employees()
+
+    # from test import *
+    # doc = Document('work_files/Для_ТО_БН_2025_приборы,_корочки_и_пр.docx')
+    #
+    #
+    #
+    # emp1 = db.add_employee("Наиль", "Тажитдинов", 2, "уд. № 0069-0377 по УК, ВИК до 01.03.2026;\nпо ЭК до 01.03.2027.", "Азаматович", doc.tables[6]._tbl.xml)
+    # emp2 = db.add_employee("Артур", "Салимов", 2, "уд. № 0069-0963 по ВИК, УК до 30.04.2028.", "Рустемович")
+    # emp3 = db.add_employee("Вячеслав", "Парфенов", 1, "уд. № НОАП-0069-0425 по УК до 29.03.2027;\nуд. № 0042-5807 по ПВК, МК, ВИК до 28.02.2028.", "Федорович", doc.tables[0]._tbl.xml)
+    # emp4 = db.add_employee("Пономаренко", "Денис", 1, "уд. № 0042-5805 по УК, МК, ПВК, ВИК до 28.02.2028.", "Витальевич")
+    # db.print_all_employees()
+
+    #-----------------------------------------------------------
     #
     # Добавляем позиции
     # if emp1 and emp2:

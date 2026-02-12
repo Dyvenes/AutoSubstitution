@@ -1,3 +1,4 @@
+from docx.oxml import parse_xml
 from flask import Flask, request, send_file, render_template, jsonify
 
 from pathlib import Path
@@ -212,6 +213,30 @@ class WordTemplateProcessor:
 
         self.process_headers_footers()
 
+    def replace_table_by_index(self, table_index, new_table_xml):
+        tables = self.doc.tables
+
+        if table_index < len(tables):
+            # Получаем элемент таблицы для замены
+            old_table_element = tables[table_index]._tbl
+
+            # Получаем родительский элемент
+            parent = old_table_element.getparent()
+
+            # Создаем новую таблицу
+            if isinstance(new_table_xml, str):
+                new_table_element = parse_xml(new_table_xml)
+            else:
+                # Если передан Table объект
+                new_table_element = new_table_xml._tbl
+
+            # Заменяем старую таблицу новой
+            parent.replace(old_table_element, new_table_element)
+
+            print(f"Таблица {table_index} успешно заменена")
+        else:
+            print(f"Таблица с индексом {table_index} не найдена")
+
     def get_bytes(self):
         """Возвращает документ в виде bytes"""
         output = io.BytesIO()
@@ -325,12 +350,15 @@ def generate_document():
         employees = db.get_all_employees()
         for employer in employees:
             logger.info("db surname: " + str(employer.surname))
-            if employer.surname == leader_surname:
+            print(employer.surname.strip() == leader_surname.strip())
+            if employer.surname.strip() == leader_surname.strip():
                 leader = employer
                 break
         else:
+            logger.info("Leader NOT found")
             raise "Leader not found"
 
+        logger.info("Leader found")
         team_number = leader.team_number
         leader_full = leader.surname + " " + leader.name + " " + leader.lastname
         leader_short = leader.name[0] + ". " + leader.lastname[0] + ". " + leader.surname
@@ -348,6 +376,8 @@ def generate_document():
         worker_short = worker.name[0] + ". " + worker.lastname[0] + ". " + worker.surname
         worker_position = worker.position
         worker_license = worker.license
+        logger.info("ALL DATA GOT")
+        instrument_table = leader.instrument_table
         logger.info("L_F: " + str(leader_full))
         logger.info("L_S: " + str(leader_short))
         logger.info("L_Pos: " + str(leader_position))
@@ -406,6 +436,8 @@ def generate_document():
 
         processor = WordTemplateProcessor(str(TEMPLATE_PATH))
         logger.info("CREATED FILE")
+        processor.replace_table_by_index(3, instrument_table)
+        logger.info("TABLE REPLACED")
         processor.set_replacements(replacements)
         logger.info("SET REPLACEMENTS")
         processor.process_document()
