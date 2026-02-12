@@ -67,26 +67,26 @@ class WordTemplateProcessor:
             # Header первой страницы
             if section.first_page_header is not None:
                 for paragraph in section.first_page_header.paragraphs:
-                    self.smart_replace_in_paragraph(paragraph)
+                    self.smart_replace_in_paragraph(paragraph, False)
                 # Обработка таблиц в колонтитулах
                 for table in section.first_page_header.tables:
                     self.process_table_in_container(table)
 
             # Обычный верхний колонтитул
             for paragraph in section.header.paragraphs:
-                self.smart_replace_in_paragraph(paragraph)
+                self.smart_replace_in_paragraph(paragraph, False)
             for table in section.header.tables:
                 self.process_table_in_container(table)
 
             # Нижние колонтитулы (footers)
             if section.first_page_footer is not None:
                 for paragraph in section.first_page_footer.paragraphs:
-                    self.smart_replace_in_paragraph(paragraph)
+                    self.smart_replace_in_paragraph(paragraph, False)
                 for table in section.first_page_footer.tables:
                     self.process_table_in_container(table)
 
             for paragraph in section.footer.paragraphs:
-                self.smart_replace_in_paragraph(paragraph)
+                self.smart_replace_in_paragraph(paragraph, False)
             for table in section.footer.tables:
                 self.process_table_in_container(table)
 
@@ -95,7 +95,7 @@ class WordTemplateProcessor:
         for row in table.rows:
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
-                    self.smart_replace_in_paragraph(paragraph)
+                    self.smart_replace_in_paragraph(paragraph, False)
 
     def merge_runs_with_placeholders(self, paragraph):
         runs = list(paragraph.runs)
@@ -123,7 +123,7 @@ class WordTemplateProcessor:
                 p_element = run._element
                 p_element.getparent().remove(p_element)
 
-    def smart_replace_in_paragraph(self, paragraph):
+    def smart_replace_in_paragraph(self, paragraph, show_inf):
         if not paragraph.runs:
             return
 
@@ -132,7 +132,9 @@ class WordTemplateProcessor:
             return
 
         runs = list(paragraph.runs)
-        # logger.info([i.text for i in runs])
+
+        if show_inf:
+            logger.info([i.text for i in runs])
 
         #logger.info("STARTING", ['' for i in paragraph.runs])
         if not any('{{' in i.text for i in runs):
@@ -184,7 +186,7 @@ class WordTemplateProcessor:
                     clear_key = key.replace('{{', '')
                     clear_key = clear_key.replace('}}', '')
                     if clear_key == var:
-                        paragraph.runs[index_to_write].text = str(value)
+                        paragraph.runs[index_to_write].text = paragraph.runs[index_to_write].text.replace('{{', str(value))
                         break
             i += 1
 
@@ -203,13 +205,21 @@ class WordTemplateProcessor:
     def process_document(self):
         """Обработка всего документа"""
         for paragraph in self.doc.paragraphs:
-            self.smart_replace_in_paragraph(paragraph)
+            self.smart_replace_in_paragraph(paragraph, False)
 
+        counter = 0
         for table in self.doc.tables:
+
+            if "Шифр, номер документа" in table.cell(0, 0).text:
+                print("ROWS COUNT:", len(table.rows))
+                print("COLLS COUNT:", len(table.rows[0].cells))
             for row in table.rows:
                 for cell in row.cells:
                     for paragraph in cell.paragraphs:
-                        self.smart_replace_in_paragraph(paragraph)
+                        if "Шифр, номер документа" in table.cell(0, 0).text:
+                            pass
+                            # print(f"CELL NUMB {counter}:{paragraph.text}")
+                        self.smart_replace_in_paragraph(paragraph, "Шифр, номер документа" in table.cell(0, 0).text)
 
         self.process_headers_footers()
 
