@@ -14,6 +14,8 @@ from db import DatabaseManager
 import logging
 import sys
 
+from urllib.parse import quote
+
 # Настройка логирования (добавьте после импортов)
 logging.basicConfig(
     level=logging.INFO,
@@ -49,6 +51,15 @@ months = {
     1: "января", 2: "февраля", 3: "марта", 4: "апреля",
     5: "мая", 6: "июня", 7: "июля", 8: "августа",
     9: "сентября", 10: "октября", 11: "ноября", 12: "декабря"
+}
+
+pipline_types = {
+    "Выкидная линия": "ВЛ",
+    "Водовод высокого давления": "ВВД",
+    "Газопровод": "ГП",
+    "Водовод низкого давления": "ВНД",
+    "Напорный нефтепровод": "НН",
+    "Нефтегазосборный трубопровод": "НС"
 }
 
 
@@ -247,6 +258,11 @@ class WordTemplateProcessor:
         else:
             print(f"Таблица с индексом {table_index} не найдена")
 
+    def get_cell_info_from_index_table(self, table_index : int, cell_pos: tuple[int]):
+        table = self.doc.tables[table_index]
+        return table.cell(*cell_pos).text
+
+
     def get_bytes(self):
         """Возвращает документ в виде bytes"""
         output = io.BytesIO()
@@ -266,6 +282,10 @@ def generate_document():
     """Генерация документа с заменой плейсхолдеров"""
     try:
         logger.info("GENERATING")
+
+        processor = WordTemplateProcessor(str(TEMPLATE_PATH))
+        logger.info("CREATED FILE")
+
         filename = request.form.get("filename")  # TODO потом генерировать автоматически??
 
         grafic = request.files.get("graf_file")
@@ -397,6 +417,32 @@ def generate_document():
         logger.info("W_S: " + str(worker_short))
         logger.info("W_Pos: " + str(worker_position))
         logger.info("W_Lic: " + str(worker_license))
+        # ----------------------------------------------------------
+        # Instrument table replacing
+
+        processor.replace_table_by_index(3, instrument_table)
+        logger.info("TABLE REPLACED")
+
+        additions_coords = {
+            'control_instruments': [[(52, 2),(52, 3), (52, 4)]],
+            'verification_certificate': [[]],
+            'control_according': []
+        }
+
+        additions_rows = [(52, 2), (51, 2), None, (2-9, 1), (20, 2)]
+
+        # Комплект ВИК (2-9, 1) - несколько строчек, надо все них вытащить. Начиная со второго столбика берется инфа
+
+
+        additions = {
+            'control_instruments': [],
+            'verification_certificate': [],
+            'control_according': []
+        }
+
+
+
+
 
         # ----------------------------------------------------------
         replacements = {
@@ -444,16 +490,13 @@ def generate_document():
             '{{installation_company}}': installation_company
         }
 
-        processor = WordTemplateProcessor(str(TEMPLATE_PATH))
-        logger.info("CREATED FILE")
-        processor.replace_table_by_index(3, instrument_table)
-        logger.info("TABLE REPLACED")
         processor.set_replacements(replacements)
         logger.info("SET REPLACEMENTS")
         processor.process_document()
         logger.info("PROCESS")
 
-        output_filename = f'{filename}.docx'
+        #output_filename = f'{filename}.docx'
+        output_filename = f'{report_number}_{pipline_types[pipline_type]}_{pipline_name}.docx'
         logger.info("FILE NAME: " + str(output_filename))
 
         output_path = OUTPUT_DIR / output_filename
@@ -462,7 +505,7 @@ def generate_document():
         return send_file(
             output_path,
             as_attachment=True,
-            download_name=output_filename,
+            download_name=quote(output_filename),
             mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
     except Exception as e:
