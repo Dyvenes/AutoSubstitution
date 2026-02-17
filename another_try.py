@@ -73,40 +73,43 @@ class WordTemplateProcessor:
 
     def process_headers_footers(self):
         """Обработка всех колонтитулов в документе"""
-        # Обработка верхних колонтитулов (headers)
+        print("Обработка верхних колонтитулов (headers)")
         for section in self.doc.sections:
-            # Header первой страницы
+            print("Header первой страницы")
             if section.first_page_header is not None:
                 for paragraph in section.first_page_header.paragraphs:
                     self.smart_replace_in_paragraph(paragraph, False)
-                # Обработка таблиц в колонтитулах
+                print("Обработка таблиц в колонтитулах")
                 for table in section.first_page_header.tables:
                     self.process_table_in_container(table)
 
-            # Обычный верхний колонтитул
+            print("Обычный верхний колонтитул")
             for paragraph in section.header.paragraphs:
-                self.smart_replace_in_paragraph(paragraph, False)
+                print("TEXT IN FOOTERS")
+                self.smart_replace_in_paragraph(paragraph, True)
             for table in section.header.tables:
-                self.process_table_in_container(table)
+                print("TABLES IN FOOTERS")
+                self.process_table_in_container(table, True)
 
-            # Нижние колонтитулы (footers)
+            print("Нижние колонтитулы (footers)")
             if section.first_page_footer is not None:
                 for paragraph in section.first_page_footer.paragraphs:
                     self.smart_replace_in_paragraph(paragraph, False)
                 for table in section.first_page_footer.tables:
                     self.process_table_in_container(table)
 
+            print("Обычный нижний колонтитул")
             for paragraph in section.footer.paragraphs:
                 self.smart_replace_in_paragraph(paragraph, False)
             for table in section.footer.tables:
                 self.process_table_in_container(table)
 
-    def process_table_in_container(self, table):
+    def process_table_in_container(self, table, show_inf = False):
         """Обработка таблиц в колонтитулах"""
         for row in table.rows:
             for cell in row.cells:
                 for paragraph in cell.paragraphs:
-                    self.smart_replace_in_paragraph(paragraph, False)
+                    self.smart_replace_in_paragraph(paragraph, show_inf)
 
     def merge_runs_with_placeholders(self, paragraph):
         runs = list(paragraph.runs)
@@ -147,7 +150,7 @@ class WordTemplateProcessor:
         if show_inf:
             logger.info([i.text for i in runs])
 
-        #logger.info("STARTING", ['' for i in paragraph.runs])
+        # logger.info("STARTING", ['' for i in paragraph.runs])
         if not any('{{' in i.text for i in runs):
             return
 
@@ -168,39 +171,49 @@ class WordTemplateProcessor:
                 continue
 
             new_text = runs[i].text
-            if '{{' == new_text.strip():
+            if '{{' in new_text:
                 """
                 TODO сейчас не надежно ищет, основываясь на том, что всегда 
                 делит отдельными ранами. Надо отслеживать, если встретились два {{ подряд, то рэйсить ошибку
                 
                 когда удаляется }} могут теряться пробелы 
                 """
+
+                var = new_text[new_text.index('{{') + 2:] # Если {{something, то запишет something, или просто пустую строку
+                paragraph.runs[i].text = new_text.replace(var, '') # Если var не пустой, то удалит его, иначе ничего не будет
+
                 index_to_write = i
 
                 i += 1
 
                 new_text = runs[i].text
 
-
                 # paragraph.runs[i].text = ''
 
-                var = str()
-
-                while '}}' != new_text.strip():
+                while '}}' not in new_text:
                     var += new_text
                     paragraph.runs[i].text = ''
                     i += 1
                     new_text = runs[i].text
+                if new_text.index('}}') != 0:
+                    # print("HERE | NEW_TEXT BEFORE:", new_text)
+                    var += new_text[:new_text.index('}}')]
+                    paragraph.runs[i].text = new_text.replace(new_text[:new_text.index('}}')], '')
+                    # print("NEW_TEXT AFTER:", new_text)
+                if show_inf:
+                    print("VAR:", var)
                 paragraph.runs[i].text = paragraph.runs[i].text.replace('}}', '')
 
                 for key, value in self.replacements.items():
                     clear_key = key.replace('{{', '')
                     clear_key = clear_key.replace('}}', '')
                     if clear_key == var:
-                        paragraph.runs[index_to_write].text = paragraph.runs[index_to_write].text.replace('{{', str(value))
+                        paragraph.runs[index_to_write].text = paragraph.runs[index_to_write].text.replace('{{',
+                                                                                                          str(value))
+                        if show_inf:
+                            print("VAR FOUND | RES:", paragraph.text)
                         break
             i += 1
-
 
     def copy_run_formatting(self, source_run, target_run):
         """Копирует форматирование из одного Run в другой"""
@@ -215,24 +228,23 @@ class WordTemplateProcessor:
 
     def process_document(self):
         """Обработка всего документа"""
+        logger.info("STARTING TEXT REPLACEMENT")
+        logger.info("SUCCESS")
         for paragraph in self.doc.paragraphs:
             self.smart_replace_in_paragraph(paragraph, False)
 
         counter = 0
+        logger.info("STARTING TABLES REPLACEMENT")
         for table in self.doc.tables:
-
-            if "Шифр, номер документа" in table.cell(0, 0).text:
-                print("ROWS COUNT:", len(table.rows))
-                print("COLLS COUNT:", len(table.rows[0].cells))
             for row in table.rows:
                 for cell in row.cells:
                     for paragraph in cell.paragraphs:
-                        if "Шифр, номер документа" in table.cell(0, 0).text:
-                            pass
-                            # print(f"CELL NUMB {counter}:{paragraph.text}")
-                        self.smart_replace_in_paragraph(paragraph, "Шифр, номер документа" in table.cell(0, 0).text)
+                        self.smart_replace_in_paragraph(paragraph, False)
+        logger.info("SUCCESS")
 
+        logger.info("STARTING FOOTERS REPLACEMENT")
         self.process_headers_footers()
+        logger.info("SUCCESS")
 
     def replace_table_by_index(self, table_index, new_table_xml):
         tables = self.doc.tables
@@ -258,10 +270,9 @@ class WordTemplateProcessor:
         else:
             print(f"Таблица с индексом {table_index} не найдена")
 
-    def get_cell_info_from_index_table(self, table_index : int, cell_pos: tuple[int]):
+    def get_cell_info_from_index_table(self, table_index: int, cell_pos: tuple[int, int]):
         table = self.doc.tables[table_index]
         return table.cell(*cell_pos).text
-
 
     def get_bytes(self):
         """Возвращает документ в виде bytes"""
@@ -362,21 +373,21 @@ def generate_document():
         leader_surname = csv[row_index][21]
 
         # HZ NOMERNAYA TABLE
-        #number_table = request.files.get("report_table_file")
+        # number_table = request.files.get("report_table_file")
 
-        #enter_lay = pd.read_excel(number_table, sheet_name="Ввод данных", nrows=20, dtype=str, engine='openpyxl')
-        #logger.info("FILE READED")
-        #enter_lay_csv = enter_lay.to_csv(sep=';').split('\r\n', )
-        #logger.info(enter_lay_csv)
-        #enter_lay_csv = [i.split(';') for i in enter_lay_csv]
+        # enter_lay = pd.read_excel(number_table, sheet_name="Ввод данных", nrows=20, dtype=str, engine='openpyxl')
+        # logger.info("FILE READED")
+        # enter_lay_csv = enter_lay.to_csv(sep=';').split('\r\n', )
+        # logger.info(enter_lay_csv)
+        # enter_lay_csv = [i.split(';') for i in enter_lay_csv]
 
-        #full_pipline_name = enter_lay_csv[0][2]
+        # full_pipline_name = enter_lay_csv[0][2]
         # ----------------------------------------------------------
         # DATABASE
 
         logger.info("LEADER SURNAME: " + str(leader_surname))
 
-        leader = None # Employer class
+        leader = None  # Employer class
         employees = db.get_all_employees()
         for employer in employees:
             logger.info("db surname: " + str(employer.surname))
@@ -396,7 +407,7 @@ def generate_document():
         leader_license = leader.license
 
         # team_members = [] если вдруг команда будет состоять больше чем из 2 человек
-        worker = None # Employer class
+        worker = None  # Employer class
         for employer in employees:
             if employer.team_number == team_number and employer.id != leader.id:
                 worker = employer
@@ -423,15 +434,114 @@ def generate_document():
         processor.replace_table_by_index(3, instrument_table)
         logger.info("TABLE REPLACED")
 
-        additions_coords = {
-            'control_instruments': [[(52, 2),(52, 3), (52, 4)]],
-            'verification_certificate': [[]],
-            'control_according': []
-        }
 
-        additions_rows = [(52, 2), (51, 2), None, (2-9, 1), (20, 2)]
+        row_data = []
+        for i in range(5):
+            row_data.append(processor.get_cell_info_from_index_table(3, (52, 2 + i)).strip())
+        prilojenie_5 = [f"{row_data[0]} {row_data[1]},\n зав. № {row_data[2]}", f"№ {row_data[4]} до {row_data[3]}"]
 
-        # Комплект ВИК (2-9, 1) - несколько строчек, надо все них вытащить. Начиная со второго столбика берется инфа
+        row_data = []
+        for i in range(5):
+            row_data.append(processor.get_cell_info_from_index_table(3, (51, 2 + i)).strip())
+        prilojenie_6 = [
+            f"{row_data[0]} {row_data[1]}, зав. № {row_data[2]}, {processor.get_cell_info_from_index_table(3, (56, 2)).strip()}"
+            f"\n(?ШТ?), {processor.get_cell_info_from_index_table(3, (56, 6)).lower().strip()}.", f"№ {row_data[4]} до {row_data[3]}"]
+
+        row_data = []
+        row_data.append([processor.get_cell_info_from_index_table(3, (2, 1)).strip()])
+        print(row_data)
+        for j in range(2, 11):
+            row_data.append([])
+            print(row_data)
+            for i in range(4):
+                row_data[j-1].append(processor.get_cell_info_from_index_table(3, (j, 2 + i)).strip())
+
+        prilojenie_10 = [f"{row_data.pop(0)[0]}:\n"]
+
+        print(row_data)
+        for row_instr in row_data:
+            print("PROLOJ:", prilojenie_10[0])
+            print("ROW_INSTR:", row_instr)
+            prilojenie_10[0] += f" {row_instr[0]} {row_instr[1]} зав. № {row_instr[2]};"
+
+
+        prilojenie_10.append("")
+        prilojenie_10[1] += (f"№{processor.get_cell_info_from_index_table(3, (2, 6)).strip()} до "
+                             f"{processor.get_cell_info_from_index_table(3, (2, 5)).strip()};")
+
+        for row_instr in (11, 12, 13, 46):
+            prilojenie_10[0] += (f" {processor.get_cell_info_from_index_table(3, (row_instr, 2)).strip()} "
+                                 f"{processor.get_cell_info_from_index_table(3, (row_instr, 3)).strip()} "
+                                 f"зав. № {processor.get_cell_info_from_index_table(3, (row_instr, 4)).strip()};")
+
+            prilojenie_10[1] += (f" № {processor.get_cell_info_from_index_table(3, (row_instr, 6)).strip()} до "
+                                 f"{processor.get_cell_info_from_index_table(3, (row_instr, 5)).strip()};")
+
+
+        prilojenie_10.append("")
+        for row_instr in (15, 16, 17, 18):
+            prilojenie_10[2] += (f" {processor.get_cell_info_from_index_table(3, (row_instr, 3)).strip()}"
+                                 f" зав. № {processor.get_cell_info_from_index_table(3, (row_instr, 4)).strip()}"
+                                 f" свид. {processor.get_cell_info_from_index_table(3, (row_instr, 6)).strip()}"
+                                 f" до {processor.get_cell_info_from_index_table(3, (row_instr, 5)).strip()}\n")
+        prilojenie_10[2] = prilojenie_10[2].strip()
+
+        for_insert_text = prilojenie_10[0].split(' ')
+        index_linear = for_insert_text.index('Линейка')
+        for_insert_text[index_linear + 2] = 'Л-300' # заменяем 'мм' на 'Л-300'
+        for_insert_text[index_linear + 3] = '(' + for_insert_text[index_linear + 3] + ')'
+        prilojenie_10[0] = ' '.join(for_insert_text)
+
+        row_data = []
+        for i in range(5):
+            row_data.append(processor.get_cell_info_from_index_table(3, (20, 2 + i)).strip())
+        prilojenie_11 = [f"{row_data[0]} {row_data[1]},\n заводской № {row_data[2]}",
+                         f"№ {row_data[4]} до {row_data[3]}", ""]
+
+        for row_instr in (28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39):
+            prilojenie_11[2] += (f"{processor.get_cell_info_from_index_table(3, (row_instr, 3)).strip()}"
+                                 f" зав. № {processor.get_cell_info_from_index_table(3, (row_instr, 4)).strip()}"
+                                 f" свид. № {processor.get_cell_info_from_index_table(3, (row_instr, 6)).strip()}"
+                                 f" до {processor.get_cell_info_from_index_table(3, (row_instr, 5)).strip()};\n")
+        prilojenie_11[2] = prilojenie_11[2].strip()
+
+        row_data = []
+        for i in range(5):
+            row_data.append(processor.get_cell_info_from_index_table(3, (19, 2 + i)).strip())
+        prilojenie_12 = [f"{row_data[0]} {row_data[1]} зав. № {row_data[2]}",
+                         f"№ {row_data[4]} до {row_data[3]}", ""]
+        row_data = []
+        for i in range(4):
+            row_data.append(processor.get_cell_info_from_index_table(3, (30, 3 + i)).strip())
+        prilojenie_12[2] = f"{row_data[0]} зав. № {row_data[1]} свид. № {row_data[3]} до {row_data[2]};"
+
+
+
+        row_data = []
+        for i in range(5):
+            row_data.append(processor.get_cell_info_from_index_table(3, (21, 2 + i)).strip())
+        prilojenie_13 = [f"{row_data[0]} {row_data[1]} № {row_data[2]}",
+                         f"№ {row_data[4]} до {row_data[3]}", ""]
+        row_data = []
+        for i in range(5):
+            row_data.append(processor.get_cell_info_from_index_table(3, (22, 2 + i)).strip())
+        prilojenie_13[2] = f"{row_data[0]} {row_data[1]} № {row_data[2]}\n№ {row_data[4]} до {row_data[3]}"
+
+        prilojenie_14 = (f"{processor.get_cell_info_from_index_table(3, (47, 2)).strip()}"
+                         f" {processor.get_cell_info_from_index_table(3, (47, 3)).strip()}"
+                         f" зав. №{processor.get_cell_info_from_index_table(3, (47, 4)).strip()}")
+
+        print("---PRILOJENIYA---")
+        print("---5---")
+        print(prilojenie_5)
+        print("---6---")
+        print(prilojenie_6)
+        print("---10---")
+        print(prilojenie_10)
+
+
+
+        additions_rows = [(52, 2), (51, 2), None, (2 - 9, 1), (20, 2)]
 
 
         additions = {
@@ -439,10 +549,6 @@ def generate_document():
             'verification_certificate': [],
             'control_according': []
         }
-
-
-
-
 
         # ----------------------------------------------------------
         replacements = {
@@ -466,11 +572,11 @@ def generate_document():
             '{{wall_params}}': wall_params,
             '{{wall_diam}}': wall_diam,
             '{{wall_thic}}': wall_thic,
-            '{{year_of_commissioning}}': year_of_commissioning, # эксплуатации
+            '{{year_of_commissioning}}': year_of_commissioning,  # эксплуатации
             '{{years_of_using}}': year_of_using,
 
-            '{{leader_full}}': leader_full, # Иванов Иван Иванович
-            '{{leader_short}}': leader_short, # Иванов И. И.
+            '{{leader_full}}': leader_full,  # Иванов Иван Иванович
+            '{{leader_short}}': leader_short,  # Иванов И. И.
             '{{leader_position}}': leader_position,
             '{{leader_license}}': leader_license,
 
@@ -487,7 +593,26 @@ def generate_document():
             '{{inside_cover}}': inside_cover,
             '{{welding}}': welding,
             '{{project_documentation}}': project_documentation,
-            '{{installation_company}}': installation_company
+            '{{installation_company}}': installation_company,
+
+            '{{control_instruments_5}}': prilojenie_5[0],
+            '{{control_instruments_6}}': prilojenie_6[0],
+            '{{control_instruments_10}}': prilojenie_10[0],
+            '{{control_instruments_11}}': prilojenie_11[0],
+            '{{control_instruments_12}}': prilojenie_12[0],
+            '{{control_instruments_13}}': prilojenie_13[0],
+            '{{control_instruments_14}}': prilojenie_14,
+            '{{verification_certificate_5}}': prilojenie_5[1],
+            '{{verification_certificate_6}}': prilojenie_6[1],
+            '{{verification_certificate_10}}': prilojenie_10[1],
+            '{{verification_certificate_11}}': prilojenie_11[1],
+            '{{verification_certificate_12}}': prilojenie_12[1],
+            '{{verification_certificate_13}}': prilojenie_13[1],
+
+            '{{standard_sample_10}}': prilojenie_10[2],
+            '{{standard_sample_12}}': prilojenie_12[2],
+            '{{SOP_11}}': prilojenie_11[2],
+            '{{hardness_measures_13}}': prilojenie_13[2]
         }
 
         processor.set_replacements(replacements)
@@ -495,7 +620,7 @@ def generate_document():
         processor.process_document()
         logger.info("PROCESS")
 
-        #output_filename = f'{filename}.docx'
+        # output_filename = f'{filename}.docx'
         output_filename = f'{report_number}_{pipline_types[pipline_type]}_{pipline_name}.docx'
         logger.info("FILE NAME: " + str(output_filename))
 
@@ -512,17 +637,15 @@ def generate_document():
         return {"detail": f"Ошибка сервера: {str(e)}"}, 500
 
 
-
 @app.route("/process_graf_file", methods=["POST"])
 def process_graf_file():
     logger.info("PROCESSING FILE")
     file = request.files.get("graf_file")
 
-    file.save("data/graf.xlsx") # ?если файл не подходящего формата, то надо его удалить?
+    file.save("data/graf.xlsx")  # ?если файл не подходящего формата, то надо его удалить?
     # создает файл, даже если его по сути нет
-    with open("data/date_manager.txt", "w+") as manager: # может лучше сделать csv
-        manager.write(f"graf.xlsx;{file.filename}\n") # _TODO сейчас вроде перезаписывается весь файл
-
+    with open("data/date_manager.txt", "w+") as manager:  # может лучше сделать csv
+        manager.write(f"graf.xlsx;{file.filename}\n")  # _TODO сейчас вроде перезаписывается весь файл
 
     df = pd.read_excel(file, nrows=100, dtype=str, engine='openpyxl')
 
@@ -533,7 +656,7 @@ def process_graf_file():
     col = 0
     for i in range(len(csv)):
         if 'ТО №' in csv[i]:
-            row = i + 1 # в текущем - заголовок
+            row = i + 1  # в текущем - заголовок
             col = csv[i].index('ТО №')
             break
     else:
@@ -550,6 +673,7 @@ def process_graf_file():
         "success": True,
         "data": options,
     }
+
 
 @app.route("/preload_files", methods=["GET"])
 def preload_files():
@@ -572,9 +696,9 @@ def preload_files():
             "files": files
         }
 
+
 @app.route("/upload_file", methods=["GET"])
 def upload_file():
-
     filename = request.args.get('name')
     logger.info(str(filename))
 
@@ -593,6 +717,7 @@ def upload_file():
         as_attachment=True,
         download_name=original_filename
     )
+
 
 @app.route("/get_teams_list", methods=["GET"])
 def get_teams_list():
