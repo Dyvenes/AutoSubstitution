@@ -148,6 +148,87 @@
             transform: scale(1.01);
         }
 
+        /* Стили для области загрузки изображений */
+        .images-drop-area {
+            border: 3px dashed #cbd5e1;
+            transition: all 0.3s ease;
+            background-color: #f8fafc;
+            border-radius: 0.75rem;
+            min-height: 150px;
+        }
+
+        .images-drop-area:hover, .images-drop-area.dragover {
+            border-color: #8b5cf6;
+            background-color: #f5f3ff;
+            transform: scale(1.01);
+        }
+
+        .image-preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .image-preview-item {
+            position: relative;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            aspect-ratio: 1;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .image-preview-item:hover {
+            border-color: #8b5cf6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-item .remove-image {
+            position: absolute;
+            top: 0.25rem;
+            right: 0.25rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ef4444;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid #fecaca;
+        }
+
+        .image-preview-item .remove-image:hover {
+            background: #ef4444;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .image-preview-item .image-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.25rem;
+            font-size: 0.7rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .btn-primary {
             background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
             transition: all 0.3s ease;
@@ -248,21 +329,76 @@
             color: #2563eb;
         }
 
-        /* Адаптивность для кнопок */
-        @media (max-width: 768px) {
-            .insulation-option label {
-                padding: 12px;
-            }
+        /* Стили для таблицы секций */
+        .sections-table-container {
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            border: 2px solid #e2e8f0;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
 
-            .insulation-option .custom-radio {
-                width: 20px;
-                height: 20px;
-            }
+        .sections-table-container:hover {
+            border-color: #94a3b8;
+        }
 
-            .insulation-option .radio-dot {
-                width: 10px;
-                height: 10px;
-            }
+        .sections-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .sections-table th {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            border-bottom: 2px solid #cbd5e1;
+            text-align: left;
+        }
+
+        .sections-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .sections-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .sections-table input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .sections-table input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+
+        .sections-table input:hover:not(:focus) {
+            border-color: #94a3b8;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+
+        .btn-icon:hover {
+            background-color: #f1f5f9;
+            color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-icon.delete:hover {
+            background-color: #fee2e2;
+            color: #dc2626;
         }
 
         /* Стили для скролла */
@@ -304,6 +440,33 @@
             -moz-appearance: none;
             appearance: none;
         }
+
+        /* Адаптивность для кнопок */
+        @media (max-width: 768px) {
+            .insulation-option label {
+                padding: 12px;
+            }
+
+            .insulation-option .custom-radio {
+                width: 20px;
+                height: 20px;
+            }
+
+            .insulation-option .radio-dot {
+                width: 10px;
+                height: 10px;
+            }
+
+            .sections-table th, .sections-table td {
+                padding: 0.5rem;
+            }
+
+            .image-preview-container {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+
+
     </style>
 </head>
 <body class="min-h-screen gradient-bg font-['Inter']">
@@ -386,19 +549,6 @@
                                 Основная информация
                             </h3>
                         </div>
-
-                    <!--    <div>
-                            <label for="filename" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-building mr-2 field-icon"></i>
-                                Название файла
-                            </label>
-                            <input type="text"
-                                   id="filename"
-                                   name="filename"
-                                   required
-                                   class="w-full px-4 py-3 rounded-lg input-field focus:outline-none"
-                                   placeholder="0209_ВВД_Т. вр. (скв. 194) - скв. 194">
-                        </div> -->
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -636,7 +786,114 @@
                         </div>
                     </div>
 
-                    <!-- Кнопки (оставлены на том же месте) -->
+                    <!-- Блок таблицы секций трубопровода -->
+                    <div class="space-y-4">
+                        <div class="card-header p-4 -m-4 mb-4 rounded-t-2xl">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-800">
+                                    <i class="fas fa-table mr-2 field-icon"></i>
+                                    Секции трубопровода
+                                </h3>
+                                <button type="button"
+                                        onclick="addSectionRow()"
+                                        class="bg-green-50 text-green-600 hover:bg-green-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Добавить секцию</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="sections-table-container">
+                            <table class="sections-table" id="sectionsTable">
+                                <thead>
+                                    <tr>
+                                        <th>№</th>
+                                        <th>Наименование секции</th>
+                                        <th>Пикет</th>
+                                        <th>Ду, мм</th>
+                                        <th>S<sub>ном</sub>, мм</th>
+                                        <th style="width: 30px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sectionsTableBody">
+                                    <!-- Строки будут добавляться динамически -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Примеры из изображений для быстрого заполнения -->
+                        <div class="flex flex-wrap gap-3 mt-4">
+                            <button type="button"
+                                    onclick="clearAllSections()"
+                                    class="text-sm bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1 ml-auto">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>Очистить все</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- НОВЫЙ БЛОК: Загрузка изображений -->
+                    <div class="space-y-4">
+                        <div class="card-header p-4 -m-4 mb-4 rounded-t-2xl">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-800">
+                                    <i class="fas fa-images mr-2 text-purple-600"></i>
+                                    Приложения (изображения)
+                                </h3>
+                                <span class="text-sm text-gray-500">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    PNG, JPG, JPEG до 10MB каждый
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Область загрузки изображений -->
+                        <div id="imagesDropArea" class="images-drop-area p-6 transition-all duration-300 cursor-pointer">
+                            <input type="file"
+                                   id="imageFiles"
+                                   name="image_files"
+                                   multiple
+                                   accept=".jpg,.jpeg,.png,.gif,.bmp,.webp"
+                                   class="hidden">
+
+                            <div class="text-center" id="imagesDropContent">
+                                <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 mb-3"></i>
+                                <p class="text-lg font-medium text-gray-700 mb-1">
+                                    Перетащите изображения сюда или кликните для выбора
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    Поддерживаются форматы: JPG, PNG, GIF, BMP, WEBP
+                                </p>
+                            </div>
+
+                            <!-- Контейнер для предпросмотра изображений -->
+                            <div id="imagePreviews" class="image-preview-container">
+                                <!-- Предпросмотры будут добавляться сюда динамически -->
+                            </div>
+                        </div>
+
+                        <!-- Кнопки управления изображениями -->
+                        <div class="flex flex-wrap gap-3 mt-2">
+                            <button type="button"
+                                    onclick="document.getElementById('imageFiles').click()"
+                                    class="bg-purple-50 text-purple-600 hover:bg-purple-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Выбрать изображения</span>
+                            </button>
+
+                            <button type="button"
+                                    onclick="clearAllImages()"
+                                    class="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>Очистить все</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Скрытое поле для передачи данных секций -->
+                    <input type="hidden" name="sections_data" id="sectionsData">
+
+                    <!-- Кнопки -->
                     <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
                         <button type="submit"
                                 id="submitBtn"
@@ -690,6 +947,9 @@
             }
         }
 
+        // Массив для хранения загруженных изображений
+        let uploadedImages = [];
+
         // Определение URL сервера
         function getServerAddress() {
             const protocol = window.location.protocol;
@@ -704,9 +964,135 @@
 
         // Устанавливаем сегодняшнюю дату по умолчанию
         const today = new Date().toISOString().split('T')[0];
-        // загрузка существующих файлов
-        preload_files();
 
+        // Инициализация таблицы секций
+        let sectionCounter = 0;
+
+        // Функция для добавления строки в таблицу секций
+        function addSectionRow(sectionData = null) {
+            const tbody = document.getElementById('sectionsTableBody');
+            const rowId = `section_${sectionCounter++}`;
+
+            const tr = document.createElement('tr');
+            tr.id = rowId;
+
+            // Номер строки
+            const tdNumber = document.createElement('td');
+            tdNumber.className = 'font-medium text-gray-700';
+            tdNumber.textContent = tbody.children.length + 1;
+
+            // Наименование секции
+            const tdName = document.createElement('td');
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.className = 'section-name';
+            nameInput.placeholder = 'Секция 30 ЗМС';
+            nameInput.value = sectionData ? sectionData.name || '' : '';
+            tdName.appendChild(nameInput);
+
+            // Пикет
+            const tdPicket = document.createElement('td');
+            const picketInput = document.createElement('input');
+            picketInput.type = 'text';
+            picketInput.className = 'section-picket';
+            picketInput.placeholder = '00+00';
+            picketInput.value = sectionData ? sectionData.picket || '' : '';
+            tdPicket.appendChild(picketInput);
+
+            // Диаметр
+            const tdDiameter = document.createElement('td');
+            const diameterInput = document.createElement('input');
+            diameterInput.type = 'text';
+            diameterInput.className = 'section-diameter';
+            diameterInput.placeholder = '65';
+            diameterInput.value = sectionData ? sectionData.diameter || '' : '';
+            tdDiameter.appendChild(diameterInput);
+
+            // Толщина стенки
+            const tdThickness = document.createElement('td');
+            const thicknessInput = document.createElement('input');
+            thicknessInput.type = 'text';
+            thicknessInput.className = 'section-thickness';
+            thicknessInput.placeholder = '16';
+            thicknessInput.value = sectionData ? sectionData.thickness || '' : '';
+            tdThickness.appendChild(thicknessInput);
+
+            // Кнопка удаления
+            const tdActions = document.createElement('td');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-icon delete';
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            deleteBtn.onclick = function() {
+                removeSectionRow(rowId);
+            };
+            tdActions.appendChild(deleteBtn);
+
+            tr.appendChild(tdNumber);
+            tr.appendChild(tdName);
+            tr.appendChild(tdPicket);
+            tr.appendChild(tdDiameter);
+            tr.appendChild(tdThickness);
+            tr.appendChild(tdActions);
+
+            tbody.appendChild(tr);
+
+            // Обновить нумерацию
+            updateSectionNumbers();
+
+            return tr;
+        }
+
+        // Функция для удаления строки
+        function removeSectionRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                updateSectionNumbers();
+            }
+        }
+
+        // Функция для обновления нумерации строк
+        function updateSectionNumbers() {
+            const tbody = document.getElementById('sectionsTableBody');
+            Array.from(tbody.children).forEach((row, index) => {
+                row.cells[0].textContent = index + 1;
+            });
+        }
+
+        // Функция для сбора данных из таблицы
+        function collectSectionsData() {
+            const sections = [];
+            const rows = document.getElementById('sectionsTableBody').children;
+
+            Array.from(rows).forEach(row => {
+                const name = row.querySelector('.section-name')?.value.trim();
+                const picket = row.querySelector('.section-picket')?.value.trim();
+                const diameter = row.querySelector('.section-diameter')?.value.trim();
+                const thickness = row.querySelector('.section-thickness')?.value.trim();
+
+                // Добавляем только если заполнено хотя бы одно поле
+                if (name || picket || diameter || thickness) {
+                    sections.push({
+                        name: name || '',
+                        picket: picket || '',
+                        diameter: diameter || '',
+                        thickness: thickness || ''
+                    });
+                }
+            });
+
+            return sections;
+        }
+
+        // Очистка всех секций
+        function clearAllSections() {
+            const tbody = document.getElementById('sectionsTableBody');
+            tbody.innerHTML = '';
+            sectionCounter = 0;
+        }
+
+        // Загрузка существующих файлов
         async function preload_files() {
             try {
                 const response = await fetch('/preload_files');
@@ -824,6 +1210,138 @@
             }
         }
 
+        // НОВЫЕ ФУНКЦИИ: Управление загрузкой изображений
+        function setupImageDrop() {
+            const dropArea = document.getElementById('imagesDropArea');
+            const imageInput = document.getElementById('imageFiles');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, () => highlight(dropArea), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, () => unhighlight(dropArea), false);
+            });
+
+            function highlight(area) {
+                area.classList.add('dragover');
+            }
+
+            function unhighlight(area) {
+                area.classList.remove('dragover');
+            }
+
+            dropArea.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleImageFiles(files);
+            }, false);
+
+            dropArea.addEventListener('click', () => {
+                imageInput.click();
+            });
+
+            imageInput.addEventListener('change', function() {
+                handleImageFiles(this.files);
+            });
+        }
+
+        function handleImageFiles(files) {
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'];
+
+            Array.from(files).forEach(file => {
+                // Проверка типа файла
+                if (!validTypes.includes(file.type)) {
+                    showError(`Файл ${file.name} имеет неподдерживаемый формат. Разрешены: JPG, PNG, GIF, BMP, WEBP`);
+                    return;
+                }
+
+                // Проверка размера файла
+                if (file.size > maxSize) {
+                    showError(`Файл ${file.name} слишком большой. Максимальный размер: 10MB`);
+                    return;
+                }
+
+                // Проверка на дубликаты
+                const isDuplicate = uploadedImages.some(img =>
+                    img.name === file.name && img.size === file.size
+                );
+
+                if (!isDuplicate) {
+                    uploadedImages.push(file);
+                    createImagePreview(file);
+                }
+            });
+
+            // Обновить input files
+            updateImageInputFiles();
+        }
+
+        function createImagePreview(file) {
+            const previewContainer = document.getElementById('imagePreviews');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'image-preview-item';
+                previewItem.dataset.filename = file.name;
+
+                previewItem.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}">
+                    <div class="remove-image" onclick="removeImage('${file.name.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="image-name" title="${file.name}">
+                        ${file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name}
+                    </div>
+                `;
+
+                previewContainer.appendChild(previewItem);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage(filename) {
+            // Удалить из массива
+            uploadedImages = uploadedImages.filter(img => img.name !== filename);
+
+            // Удалить превью
+            const previewItem = document.querySelector(`.image-preview-item[data-filename="${filename}"]`);
+            if (previewItem) {
+                previewItem.remove();
+            }
+
+            // Обновить input files
+            updateImageInputFiles();
+        }
+
+        function clearAllImages() {
+            uploadedImages = [];
+            document.getElementById('imagePreviews').innerHTML = '';
+            updateImageInputFiles();
+        }
+
+        function updateImageInputFiles() {
+            const imageInput = document.getElementById('imageFiles');
+            const dataTransfer = new DataTransfer();
+
+            uploadedImages.forEach(file => {
+                dataTransfer.items.add(file);
+            });
+
+            imageInput.files = dataTransfer.files;
+        }
+
         async function uploadAndProcessFile(file, fileType) {
             try {
                 const formData = new FormData();
@@ -883,6 +1401,13 @@
 
             document.getElementById('graf_file_size').textContent = "";
             document.getElementById('grafFileDropArea').classList.remove('border-green-400', 'bg-green-50', 'border-red-400', 'bg-red-50');
+
+            // Очистить таблицу секций
+            clearAllSections();
+
+            // Очистить изображения
+            clearAllImages();
+
             hideMessages();
             clear_graf_file();
         }
@@ -943,7 +1468,17 @@
                 showLoading();
                 showProgress(10);
 
+                // Собрать данные секций и добавить их в FormData
+                const sectionsData = collectSectionsData();
+                document.getElementById('sectionsData').value = JSON.stringify(sectionsData);
+
                 const formData = new FormData(this);
+
+                // Добавить изображения в FormData
+                uploadedImages.forEach((image, index) => {
+                    formData.append('image_files', image);
+                });
+
                 showProgress(30);
 
                 const response = await fetch('/generate', {
@@ -1047,6 +1582,14 @@
                 });
             }
 
+            // Проверка данных секций (опционально - можно требовать хотя бы одну секцию)
+            const sections = collectSectionsData();
+            if (sections.length === 0) {
+                <!-- if (!confirm('Вы не добавили ни одной секции трубопровода. Продолжить?')) {
+                    return false;
+                } -->
+            }
+
             return true;
         }
 
@@ -1102,6 +1645,18 @@
                     hideMessages();
                 }
             });
+        });
+
+        // Добавить первую строку по умолчанию
+        window.addEventListener('load', function() {
+            // Добавляем пустую строку для примера
+            addSectionRow();
+
+            // Загрузка существующих файлов
+            preload_files();
+
+            // Настройка загрузки изображений
+            setupImageDrop();
         });
     </script>
 </body>
