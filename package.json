@@ -1,0 +1,23 @@
+{
+  "name": "autosubstitution",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dyvenes/AutoSubstitution.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dyvenes/AutoSubstitution/issues"
+  },
+  "homepage": "https://github.com/Dyvenes/AutoSubstitution#readme",
+  "dependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}
