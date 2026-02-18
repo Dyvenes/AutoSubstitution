@@ -337,7 +337,7 @@ def generate_document():
         # GRAFIC TABLE
         df = pd.read_excel(grafic, nrows=100, dtype=str, engine='openpyxl')
 
-        csv = df.to_csv(sep=';').split('\r\n')
+        csv = df.to_csv(sep=';').split('\n')
         csv = [i.split(';') for i in csv]
 
         row_index = 0
@@ -377,7 +377,7 @@ def generate_document():
 
         # enter_lay = pd.read_excel(number_table, sheet_name="Ввод данных", nrows=20, dtype=str, engine='openpyxl')
         # logger.info("FILE READED")
-        # enter_lay_csv = enter_lay.to_csv(sep=';').split('\r\n', )
+        # enter_lay_csv = enter_lay.to_csv(sep=';').split('\n', )
         # logger.info(enter_lay_csv)
         # enter_lay_csv = [i.split(';') for i in enter_lay_csv]
 
@@ -649,7 +649,7 @@ def process_graf_file():
 
     df = pd.read_excel(file, nrows=100, dtype=str, engine='openpyxl')
 
-    csv = df.to_csv(sep=';').split('\r\n')
+    csv = df.to_csv(sep=';').split('\n')
     csv = [i.split(';') for i in csv]
 
     row = 0
