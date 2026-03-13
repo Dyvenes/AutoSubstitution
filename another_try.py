@@ -1,8 +1,11 @@
+import json
+
 from docx.oxml import parse_xml
 from flask import Flask, request, send_file, render_template, jsonify
 
 from pathlib import Path
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import io
 
 from docx import Document
@@ -15,6 +18,8 @@ import logging
 import sys
 
 from urllib.parse import quote
+
+import application_processing
 
 # Настройка логирования (добавьте после импортов)
 logging.basicConfig(
@@ -104,7 +109,7 @@ class WordTemplateProcessor:
             for table in section.footer.tables:
                 self.process_table_in_container(table)
 
-    def process_table_in_container(self, table, show_inf = False):
+    def process_table_in_container(self, table, show_inf=False):
         """Обработка таблиц в колонтитулах"""
         for row in table.rows:
             for cell in row.cells:
@@ -179,8 +184,10 @@ class WordTemplateProcessor:
                 когда удаляется }} могут теряться пробелы 
                 """
 
-                var = new_text[new_text.index('{{') + 2:] # Если {{something, то запишет something, или просто пустую строку
-                paragraph.runs[i].text = new_text.replace(var, '') # Если var не пустой, то удалит его, иначе ничего не будет
+                var = new_text[
+                      new_text.index('{{') + 2:]  # Если {{something, то запишет something, или просто пустую строку
+                paragraph.runs[i].text = new_text.replace(var,
+                                                          '')  # Если var не пустой, то удалит его, иначе ничего не будет
 
                 index_to_write = i
 
@@ -297,8 +304,6 @@ def generate_document():
         processor = WordTemplateProcessor(str(TEMPLATE_PATH))
         logger.info("CREATED FILE")
 
-        filename = request.form.get("filename")  # TODO потом генерировать автоматически??
-
         grafic = request.files.get("graf_file")
         report_number = request.form.get("TO_number")
 
@@ -315,6 +320,12 @@ def generate_document():
         welding = request.form.get("welding")
         project_documentation = request.form.get("project_documentation")
         installation_company = request.form.get("installation_company")
+
+        pipline_category = request.form.get("pipeline_category")
+        passport_date = datetime.fromisoformat(request.form.get("passport_date")).strftime("%d.%m.%Y")
+        working_environment = request.form.get("working_environment")
+
+        sections_manual_data = json.loads(request.form.get('sections_data'))
         logger.info("GOT VALUES")
 
         # template_file вы сейчас игнорируете и всегда берете TEMPLATE_PATH
@@ -369,6 +380,8 @@ def generate_document():
         year_of_commissioning = datetime.fromisoformat(csv[row_index][13]).year
         year_of_using = datetime.now().year - year_of_commissioning
         diagnostic_date = datetime.fromisoformat(csv[row_index][19]).strftime("%d.%m.%Y")
+        next_diagnostic_deadline = (datetime.fromisoformat(csv[row_index][19]) + relativedelta(years=4)).strftime("%d.%m.%Y")
+        steel = csv[row_index][14]
 
         leader_surname = csv[row_index][21]
 
@@ -387,54 +400,111 @@ def generate_document():
 
         logger.info("LEADER SURNAME: " + str(leader_surname))
 
-        leader = None  # Employer class
-        employees = db.get_all_employees()
-        for employer in employees:
-            logger.info("db surname: " + str(employer.surname))
-            print(employer.surname.strip() == leader_surname.strip())
-            if employer.surname.strip() == leader_surname.strip():
-                leader = employer
-                break
+
+        BD_AVIABLE = False
+        if BD_AVIABLE:
+            leader = None  # Employer class
+            employees = db.get_all_employees()
+            for employer in employees:
+                logger.info("db surname: " + str(employer.surname))
+                print(employer.surname.strip() == leader_surname.strip())
+                if employer.surname.strip() == leader_surname.strip():
+                    leader = employer
+                    break
+            else:
+                logger.info("Leader NOT found")
+                raise "Leader not found"
+
+            logger.info("Leader found")
+            team_number = leader.team_number
+            leader_full = leader.surname + " " + leader.name + " " + leader.lastname
+            leader_short = leader.name[0] + ". " + leader.lastname[0] + ". " + leader.surname
+            leader_position = leader.position
+            leader_license = leader.license
+
+            # team_members = [] если вдруг команда будет состоять больше чем из 2 человек
+            worker = None  # Employer class
+            for employer in employees:
+                if employer.team_number == team_number and employer.id != leader.id:
+                    worker = employer
+                    break
+
+            worker_full = worker.surname + " " + worker.name + " " + worker.lastname
+            worker_short = worker.name[0] + ". " + worker.lastname[0] + ". " + worker.surname
+            worker_position = worker.position
+            worker_license = worker.license
+            logger.info("ALL DATA GOT")
+            instrument_table = leader.instrument_table
+            logger.info("L_F: " + str(leader_full))
+            logger.info("L_S: " + str(leader_short))
+            logger.info("L_Pos: " + str(leader_position))
+            logger.info("L_Lic: " + str(leader_license))
+
+            logger.info("W_F: " + str(worker_full))
+            logger.info("W_S: " + str(worker_short))
+            logger.info("W_Pos: " + str(worker_position))
+            logger.info("W_Lic: " + str(worker_license))
+            # word_tables = db.get_all_tables()
+            # for word_table in word_tables:
+            #     if word_table['prilojenie'] == 'prilojenie 12_2':
+            #         # TOD сделать таблицу из yaml, потом добавить в него данные и заменить
+            # ----------------------------------------------------------
+            # Instrument table replacing
+
+            processor.replace_table_by_index(3, instrument_table)
+
+            logger.info("TABLE REPLACED")
+
         else:
-            logger.info("Leader NOT found")
-            raise "Leader not found"
+            logger.warning("BD inactive")
+            leader_full = 'NONE'
+            leader_short = 'NONE'
+            leader_position = 'NONE'
+            leader_license = 'NONE'
 
-        logger.info("Leader found")
-        team_number = leader.team_number
-        leader_full = leader.surname + " " + leader.name + " " + leader.lastname
-        leader_short = leader.name[0] + ". " + leader.lastname[0] + ". " + leader.surname
-        leader_position = leader.position
-        leader_license = leader.license
+            worker_full = 'NONE'
+            worker_short = 'NONE'
+            worker_position = 'NONE'
+            worker_license = 'NONE'
 
-        # team_members = [] если вдруг команда будет состоять больше чем из 2 человек
-        worker = None  # Employer class
-        for employer in employees:
-            if employer.team_number == team_number and employer.id != leader.id:
-                worker = employer
-                break
-
-        worker_full = worker.surname + " " + worker.name + " " + worker.lastname
-        worker_short = worker.name[0] + ". " + worker.lastname[0] + ". " + worker.surname
-        worker_position = worker.position
-        worker_license = worker.license
-        logger.info("ALL DATA GOT")
-        instrument_table = leader.instrument_table
-        logger.info("L_F: " + str(leader_full))
-        logger.info("L_S: " + str(leader_short))
-        logger.info("L_Pos: " + str(leader_position))
-        logger.info("L_Lic: " + str(leader_license))
-
-        logger.info("W_F: " + str(worker_full))
-        logger.info("W_S: " + str(worker_short))
-        logger.info("W_Pos: " + str(worker_position))
-        logger.info("W_Lic: " + str(worker_license))
         # ----------------------------------------------------------
-        # Instrument table replacing
+        # applications tables generation
+        sections = {'not ZMS': [], 'ZMS': []}
+        for section in sections_manual_data:
+            obj = application_processing.Section(f"Секция {section['number']}",
+                                                 application_processing.SectionType(section['type']),
+                                                 section['picket'],
+                                                 section['diameter'], float(section['nominalThickness']), steel,
+                                                 float(section['minThickness']))
+            obj.set_values()
+            if section['type'] == 'ЗМС':
+                sections['ZMS'].append(obj)
+            else:
+                sections['not ZMS'].append(obj)
 
-        processor.replace_table_by_index(3, instrument_table)
-        logger.info("TABLE REPLACED")
+        application_processing.add_row_pril_12_2(sections['ZMS'], processor.doc.tables[38])
+        print('table 38 replaced')
+        application_processing.add_row_pril_12_2(sections['not ZMS'], processor.doc.tables[39])
+        print('table 39 replaced')
+        application_processing.add_row_pril_13(sections['ZMS'], processor.doc.tables[42])
+        print('table 42 replaced')
+        application_processing.add_row_pril_13(sections['not ZMS'], processor.doc.tables[43])
+        print('table 43 replaced')
 
+        """
+        TABLES
+        5 - 21
+        6 - 24
+        
+        9 - 27
+        
+        12 - 38 | 39
+        13 - 42 | 43
+        
+        """
 
+        logger.info("APPLICATION TABLES GENERATED")
+        # ----------------------------------------------------------
         row_data = []
         for i in range(5):
             row_data.append(processor.get_cell_info_from_index_table(3, (52, 2 + i)).strip())
@@ -445,7 +515,8 @@ def generate_document():
             row_data.append(processor.get_cell_info_from_index_table(3, (51, 2 + i)).strip())
         prilojenie_6 = [
             f"{row_data[0]} {row_data[1]}, зав. № {row_data[2]}, {processor.get_cell_info_from_index_table(3, (56, 2)).strip()}"
-            f"\n(?ШТ?), {processor.get_cell_info_from_index_table(3, (56, 6)).lower().strip()}.", f"№ {row_data[4]} до {row_data[3]}"]
+            f"\n(2 шт.), {processor.get_cell_info_from_index_table(3, (56, 6)).lower().strip()}.",
+            f"№ {row_data[4]} до {row_data[3]}"]
 
         row_data = []
         row_data.append([processor.get_cell_info_from_index_table(3, (2, 1)).strip()])
@@ -454,7 +525,7 @@ def generate_document():
             row_data.append([])
             print(row_data)
             for i in range(4):
-                row_data[j-1].append(processor.get_cell_info_from_index_table(3, (j, 2 + i)).strip())
+                row_data[j - 1].append(processor.get_cell_info_from_index_table(3, (j, 2 + i)).strip())
 
         prilojenie_10 = [f"{row_data.pop(0)[0]}:\n"]
 
@@ -463,7 +534,6 @@ def generate_document():
             print("PROLOJ:", prilojenie_10[0])
             print("ROW_INSTR:", row_instr)
             prilojenie_10[0] += f" {row_instr[0]} {row_instr[1]} зав. № {row_instr[2]};"
-
 
         prilojenie_10.append("")
         prilojenie_10[1] += (f"№{processor.get_cell_info_from_index_table(3, (2, 6)).strip()} до "
@@ -477,7 +547,6 @@ def generate_document():
             prilojenie_10[1] += (f" № {processor.get_cell_info_from_index_table(3, (row_instr, 6)).strip()} до "
                                  f"{processor.get_cell_info_from_index_table(3, (row_instr, 5)).strip()};")
 
-
         prilojenie_10.append("")
         for row_instr in (15, 16, 17, 18):
             prilojenie_10[2] += (f" {processor.get_cell_info_from_index_table(3, (row_instr, 3)).strip()}"
@@ -488,7 +557,7 @@ def generate_document():
 
         for_insert_text = prilojenie_10[0].split(' ')
         index_linear = for_insert_text.index('Линейка')
-        for_insert_text[index_linear + 2] = 'Л-300' # заменяем 'мм' на 'Л-300'
+        for_insert_text[index_linear + 2] = 'Л-300'  # заменяем 'мм' на 'Л-300'
         for_insert_text[index_linear + 3] = '(' + for_insert_text[index_linear + 3] + ')'
         prilojenie_10[0] = ' '.join(for_insert_text)
 
@@ -515,8 +584,6 @@ def generate_document():
             row_data.append(processor.get_cell_info_from_index_table(3, (30, 3 + i)).strip())
         prilojenie_12[2] = f"{row_data[0]} зав. № {row_data[1]} свид. № {row_data[3]} до {row_data[2]};"
 
-
-
         row_data = []
         for i in range(5):
             row_data.append(processor.get_cell_info_from_index_table(3, (21, 2 + i)).strip())
@@ -539,15 +606,24 @@ def generate_document():
         print("---10---")
         print(prilojenie_10)
 
-
-
         additions_rows = [(52, 2), (51, 2), None, (2 - 9, 1), (20, 2)]
-
 
         additions = {
             'control_instruments': [],
             'verification_certificate': [],
             'control_according': []
+        }
+
+        safety_working_chance = {
+            'IV': '0,95',
+            'III': '0,85',
+            'II': '0,75',
+        }
+
+        safety_working_chance_procent = {
+            'IV': '95,00',
+            'III': '85,00',
+            'II': '75,00',
         }
 
         # ----------------------------------------------------------
@@ -565,10 +641,17 @@ def generate_document():
             '{{deposit}}': deposit,
             '{{workshop}}': workshop,
             '{{diagnostic_date}}': diagnostic_date,
+            '{{next_diagnostic_deadline}}': next_diagnostic_deadline,
+            '{{passport_date}}': passport_date,
+            '{{working_environment}}': working_environment,
+            '{{pipline_category}}': pipline_category,
+            '{{safety_working_chance}}': safety_working_chance[pipline_category],
+            '{{safety_working_chance_procent}}': safety_working_chance_procent[pipline_category],
             '{{curr_date}}': curr_date,
             '{{str_curr_date}}': str_curr_date,  # день сделать двойным числом всегда
             '{{length_of_area}}': length_of_area,
             '{{length_of_pipline}}': length_of_pipline,
+            '{{steel_grade}}': steel,
             '{{wall_params}}': wall_params,
             '{{wall_diam}}': wall_diam,
             '{{wall_thic}}': wall_thic,
@@ -634,6 +717,7 @@ def generate_document():
             mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
     except Exception as e:
+        logger.info(f"Ошибка сервера: {str(e)}")
         return {"detail": f"Ошибка сервера: {str(e)}"}, 500
 
 

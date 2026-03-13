@@ -16,8 +16,6 @@
 
     <!-- Локальный Font Awesome -->
     <link href="/static/css/all.min.css" rel="stylesheet">
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
-<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">-->
     <style>
         /* Стили для радио-кнопок теплоизоляции */
         .insulation-option input:checked + label {
@@ -371,22 +369,102 @@
             background-color: #f8fafc;
         }
 
-        .sections-table input {
+        .sections-table input,
+        .sections-table select {
             width: 100%;
             padding: 0.5rem;
             border: 2px solid #e2e8f0;
             border-radius: 0.5rem;
             transition: all 0.3s ease;
+            background-color: white;
         }
 
-        .sections-table input:focus {
+        .sections-table select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .sections-table input:focus,
+        .sections-table select:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
             outline: none;
         }
 
-        .sections-table input:hover:not(:focus) {
+        .sections-table input:hover:not(:focus),
+        .sections-table select:hover:not(:focus) {
             border-color: #94a3b8;
+        }
+
+        /* Стили для таблицы данных */
+        .data-table-container {
+            overflow-x: auto;
+            border-radius: 0.75rem;
+            border: 2px solid #e2e8f0;
+            background-color: white;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .data-table-container:hover {
+            border-color: #94a3b8;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            border-bottom: 2px solid #cbd5e1;
+            text-align: left;
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .data-table input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        .data-table input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+
+        .data-table input:hover:not(:focus) {
+            border-color: #94a3b8;
+        }
+
+        .coordinates-cell {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .coordinates-cell input {
+            width: 50%;
         }
 
         .btn-icon {
@@ -436,17 +514,6 @@
             transition: all 0.3s ease;
         }
 
-        select.input-field {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center;
-            background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
-            padding-right: 2.5rem;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-
         /* Адаптивность для кнопок */
         @media (max-width: 768px) {
             .insulation-option label {
@@ -463,16 +530,24 @@
                 height: 10px;
             }
 
-            .sections-table th, .sections-table td {
+            .sections-table th, .sections-table td,
+            .data-table th, .data-table td {
                 padding: 0.5rem;
             }
 
             .image-preview-container {
                 grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
+
+            .coordinates-cell {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .coordinates-cell input {
+                width: 100%;
+            }
         }
-
-
     </style>
 </head>
 <body class="min-h-screen gradient-bg font-['Inter']">
@@ -589,6 +664,8 @@
                             </div>
                         </div>
 
+                        <!-- НОВЫЕ ПОЛЯ: Категория трубопровода, Рабочая среда, Дата паспорта -->
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="TO_number" class="block text-sm font-medium text-gray-700 mb-2">
@@ -633,6 +710,35 @@
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
+                                <label for="pipeline_category" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-roman-numeral mr-2 field-icon"></i>
+                                    Категория трубопровода
+                                </label>
+                                <select id="pipeline_category"
+                                        name="pipeline_category"
+                                        required
+                                        class="w-full px-4 py-3 rounded-lg input-field cursor-pointer hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                                    <option value="" disabled selected>Выберите категорию</option>
+                                    <option value="I">I</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                    <option value="IV">IV</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="passport_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-calendar-alt mr-2 field-icon"></i>
+                                    Дата паспорта трубопровода
+                                </label>
+                                <input type="date"
+                                    id="passport_date"
+                                    name="passport_date"
+                                    required
+                                    class="w-full px-4 py-3 rounded-lg input-field focus:outline-none">
+                            </div>
+
+                            <div>
                                 <label for="temperature" class="block text-sm font-medium text-gray-700 mb-2">
                                     <i class="fas fa-thermometer-half mr-2 field-icon"></i>
                                     Температура рабочая, °C
@@ -646,9 +752,23 @@
                             </div>
 
                             <div>
+                                <label for="working_environment" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-flask mr-2 field-icon"></i>
+                                    Рабочая среда
+                                </label>
+                                <input type="text"
+                                    id="working_environment"
+                                    name="working_environment"
+                                    required
+                                    class="w-full px-4 py-3 rounded-lg input-field focus:outline-none"
+                                    placeholder="Вода пластовая">
+                            </div>
+
+                            <!-- Давления вместе (рабочее и проектное) -->
+                            <div>
                                 <label for="pressure_work" class="block text-sm font-medium text-gray-700 mb-2">
                                     <i class="fas fa-gauge-high mr-2 field-icon"></i>
-                                    Давление рабочее, МПа
+                                    Давл. рабочее, МПа
                                 </label>
                                 <input type="text"
                                     id="pressure_work"
@@ -657,19 +777,19 @@
                                     class="w-full px-4 py-3 rounded-lg input-field focus:outline-none"
                                     placeholder="16,0">
                             </div>
-                        </div>
 
-                        <div>
-                            <label for="pressure_project" class="block text-sm font-medium text-gray-700 mb-2">
-                                <i class="fas fa-gauge-high mr-2 field-icon"></i>
-                                Давление проектное, МПа
-                            </label>
-                            <input type="text"
-                                id="pressure_project"
-                                name="pressure_project"
-                                required
-                                class="w-full px-4 py-3 rounded-lg input-field focus:outline-none"
-                                placeholder="16,0">
+                            <div>
+                                <label for="pressure_project" class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-gauge-high mr-2 field-icon"></i>
+                                    Давл. проектное, МПа
+                                </label>
+                                <input type="text"
+                                    id="pressure_project"
+                                    name="pressure_project"
+                                    required
+                                    class="w-full px-4 py-3 rounded-lg input-field focus:outline-none"
+                                    placeholder="16,0">
+                            </div>
                         </div>
 
                         <!-- Блок теплоизоляции -->
@@ -792,7 +912,53 @@
                         </div>
                     </div>
 
-                    <!-- Блок таблицы секций трубопровода -->
+                    <!-- НОВАЯ ТАБЛИЦА: Данные трубопровода -->
+                    <div class="space-y-4">
+                        <div class="card-header p-4 -m-4 mb-4 rounded-t-2xl">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-800">
+                                    <i class="fas fa-map-marker-alt mr-2 text-purple-600"></i>
+                                    Данные трубопровода
+                                </h3>
+                                <button type="button"
+                                        onclick="addDataRow()"
+                                        class="bg-purple-50 text-purple-600 hover:bg-purple-100 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Добавить запись</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="data-table-container">
+                            <table class="data-table" id="dataTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">№</th>
+                                        <th>Пикет</th>
+                                        <th>Координаты (X, Y)</th>
+                                        <th>Глубина заложения, м</th>
+                                        <th>Примечание</th>
+                                        <th style="width: 50px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dataTableBody">
+                                    <!-- Строки будут добавляться динамически -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Кнопка очистки таблицы данных -->
+                        <div class="flex flex-wrap gap-3 mt-4">
+                            <button type="button"
+                                    onclick="clearAllDataRows()"
+                                    class="text-sm bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors flex items-center space-x-1 ml-auto">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>Очистить все</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Блок таблицы секций трубопровода (обновлён) -->
                     <div class="space-y-4">
                         <div class="card-header p-4 -m-4 mb-4 rounded-t-2xl">
                             <div class="flex items-center justify-between">
@@ -813,11 +979,12 @@
                             <table class="sections-table" id="sectionsTable">
                                 <thead>
                                     <tr>
-                                        <th>№</th>
-                                        <th>Наименование секции</th>
+                                        <th>Номер секции</th>
+                                        <th>Тип секции</th>
                                         <th>Пикет</th>
                                         <th>Ду, мм</th>
                                         <th>S<sub>ном</sub>, мм</th>
+                                        <th>S<sub>мин</sub>, мм</th>
                                         <th style="width: 30px;"></th>
                                     </tr>
                                 </thead>
@@ -827,7 +994,7 @@
                             </table>
                         </div>
 
-                        <!-- Примеры из изображений для быстрого заполнения -->
+                        <!-- Кнопка очистки таблицы секций -->
                         <div class="flex flex-wrap gap-3 mt-4">
                             <button type="button"
                                     onclick="clearAllSections()"
@@ -896,8 +1063,9 @@
                         </div>
                     </div>
 
-                    <!-- Скрытое поле для передачи данных секций -->
+                    <!-- Скрытые поля для передачи данных таблиц -->
                     <input type="hidden" name="sections_data" id="sectionsData">
+                    <input type="hidden" name="pipeline_data" id="pipelineData">
 
                     <!-- Кнопки -->
                     <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
@@ -968,13 +1136,155 @@
         // Показываем адрес сервера в футере
         document.getElementById('serverAddress').textContent = getServerAddress();
 
-        // Устанавливаем сегодняшнюю дату по умолчанию
+        // Устанавливаем сегодняшнюю дату по умолчанию для поля даты
         const today = new Date().toISOString().split('T')[0];
+        document.getElementById('passport_date').value = today;
 
-        // Инициализация таблицы секций
+        // Инициализация счетчиков для таблиц
         let sectionCounter = 0;
+        let dataCounter = 0;
 
-        // Функция для добавления строки в таблицу секций
+        // Функции для таблицы данных
+        function addDataRow(rowData = null) {
+            const tbody = document.getElementById('dataTableBody');
+            const rowId = `data_${dataCounter++}`;
+
+            const tr = document.createElement('tr');
+            tr.id = rowId;
+
+            // Номер (автоматически)
+            const tdNumber = document.createElement('td');
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'data-number font-medium text-gray-700';
+            numberSpan.textContent = tbody.children.length + 1;
+            tdNumber.appendChild(numberSpan);
+
+            // Пикет
+            const tdPicket = document.createElement('td');
+            const picketInput = document.createElement('input');
+            picketInput.type = 'text';
+            picketInput.className = 'data-picket';
+            picketInput.placeholder = '00+00';
+            picketInput.value = rowData ? rowData.picket || '' : '';
+            tdPicket.appendChild(picketInput);
+
+            // Координаты (два поля в одной ячейке)
+            const tdCoordinates = document.createElement('td');
+            const coordsDiv = document.createElement('div');
+            coordsDiv.className = 'coordinates-cell';
+
+            const coordXInput = document.createElement('input');
+            coordXInput.type = 'text';
+            coordXInput.className = 'data-coord-x';
+            coordXInput.placeholder = 'X';
+            coordXInput.value = rowData ? rowData.coordX || '' : '';
+
+            const coordYInput = document.createElement('input');
+            coordYInput.type = 'text';
+            coordYInput.className = 'data-coord-y';
+            coordYInput.placeholder = 'Y';
+            coordYInput.value = rowData ? rowData.coordY || '' : '';
+
+            coordsDiv.appendChild(coordXInput);
+            coordsDiv.appendChild(coordYInput);
+            tdCoordinates.appendChild(coordsDiv);
+
+            // Глубина заложения
+            const tdDepth = document.createElement('td');
+            const depthInput = document.createElement('input');
+            depthInput.type = 'text';
+            depthInput.className = 'data-depth';
+            depthInput.placeholder = '1.5';
+            depthInput.value = rowData ? rowData.depth || '' : '';
+            tdDepth.appendChild(depthInput);
+
+            // Примечание
+            const tdNote = document.createElement('td');
+            const noteInput = document.createElement('input');
+            noteInput.type = 'text';
+            noteInput.className = 'data-note';
+            noteInput.placeholder = 'Примечание';
+            noteInput.value = rowData ? rowData.note || '' : '';
+            tdNote.appendChild(noteInput);
+
+            // Кнопка удаления
+            const tdActions = document.createElement('td');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn-icon delete';
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            deleteBtn.onclick = function() {
+                removeDataRow(rowId);
+            };
+            tdActions.appendChild(deleteBtn);
+
+            tr.appendChild(tdNumber);
+            tr.appendChild(tdPicket);
+            tr.appendChild(tdCoordinates);
+            tr.appendChild(tdDepth);
+            tr.appendChild(tdNote);
+            tr.appendChild(tdActions);
+
+            tbody.appendChild(tr);
+
+            // Обновить номера после добавления
+            updateDataRowNumbers();
+
+            return tr;
+        }
+
+        function removeDataRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                updateDataRowNumbers();
+            }
+        }
+
+        function updateDataRowNumbers() {
+            const rows = document.getElementById('dataTableBody').children;
+            Array.from(rows).forEach((row, index) => {
+                const numberSpan = row.querySelector('.data-number');
+                if (numberSpan) {
+                    numberSpan.textContent = index + 1;
+                }
+            });
+        }
+
+        function clearAllDataRows() {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
+            dataCounter = 0;
+        }
+
+        function collectDataRows() {
+            const data = [];
+            const rows = document.getElementById('dataTableBody').children;
+
+            Array.from(rows).forEach((row, index) => {
+                const picket = row.querySelector('.data-picket')?.value.trim();
+                const coordX = row.querySelector('.data-coord-x')?.value.trim();
+                const coordY = row.querySelector('.data-coord-y')?.value.trim();
+                const depth = row.querySelector('.data-depth')?.value.trim();
+                const note = row.querySelector('.data-note')?.value.trim();
+
+                // Добавляем только если заполнено хотя бы одно поле
+                if (picket || coordX || coordY || depth || note) {
+                    data.push({
+                        number: index + 1,
+                        picket: picket || '',
+                        coordX: coordX || '',
+                        coordY: coordY || '',
+                        depth: depth || '',
+                        note: note || ''
+                    });
+                }
+            });
+
+            return data;
+        }
+
+        // Функции для таблицы секций (обновлены)
         function addSectionRow(sectionData = null) {
             const tbody = document.getElementById('sectionsTableBody');
             const rowId = `section_${sectionCounter++}`;
@@ -982,19 +1292,29 @@
             const tr = document.createElement('tr');
             tr.id = rowId;
 
-            // Номер строки
+            // Номер секции (автоинкремент)
             const tdNumber = document.createElement('td');
-            tdNumber.className = 'font-medium text-gray-700';
-            tdNumber.textContent = tbody.children.length + 1;
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'section-number-display font-medium text-gray-700';
+            numberSpan.textContent = `Секция ${tbody.children.length + 1}`;
+            tdNumber.appendChild(numberSpan);
 
-            // Наименование секции
-            const tdName = document.createElement('td');
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.className = 'section-name';
-            nameInput.placeholder = 'Секция 30 ЗМС';
-            nameInput.value = sectionData ? sectionData.name || '' : '';
-            tdName.appendChild(nameInput);
+            // Тип секции
+            const tdType = document.createElement('td');
+            const typeSelect = document.createElement('select');
+            typeSelect.className = 'section-type input-field';
+            // Варианты
+            const options = ['', 'ЗМС', 'труба', 'Шурф'];
+            options.forEach(optValue => {
+                const option = document.createElement('option');
+                option.value = optValue;
+                option.textContent = optValue === '' ? 'Выберите тип' : optValue;
+                if (sectionData && sectionData.type === optValue) {
+                    option.selected = true;
+                }
+                typeSelect.appendChild(option);
+            });
+            tdType.appendChild(typeSelect);
 
             // Пикет
             const tdPicket = document.createElement('td');
@@ -1014,14 +1334,23 @@
             diameterInput.value = sectionData ? sectionData.diameter || '' : '';
             tdDiameter.appendChild(diameterInput);
 
-            // Толщина стенки
-            const tdThickness = document.createElement('td');
-            const thicknessInput = document.createElement('input');
-            thicknessInput.type = 'text';
-            thicknessInput.className = 'section-thickness';
-            thicknessInput.placeholder = '16';
-            thicknessInput.value = sectionData ? sectionData.thickness || '' : '';
-            tdThickness.appendChild(thicknessInput);
+            // Номинальная толщина
+            const tdNomThick = document.createElement('td');
+            const nomThickInput = document.createElement('input');
+            nomThickInput.type = 'text';
+            nomThickInput.className = 'section-nominal-thickness';
+            nomThickInput.placeholder = '0.0';
+            nomThickInput.value = sectionData ? sectionData.nominalThickness || '' : '';
+            tdNomThick.appendChild(nomThickInput);
+
+            // Минимальная толщина
+            const tdMinThick = document.createElement('td');
+            const minThickInput = document.createElement('input');
+            minThickInput.type = 'text';
+            minThickInput.className = 'section-min-thickness';
+            minThickInput.placeholder = '0.0';
+            minThickInput.value = sectionData ? sectionData.minThickness || '' : '';
+            tdMinThick.appendChild(minThickInput);
 
             // Кнопка удаления
             const tdActions = document.createElement('td');
@@ -1035,21 +1364,21 @@
             tdActions.appendChild(deleteBtn);
 
             tr.appendChild(tdNumber);
-            tr.appendChild(tdName);
+            tr.appendChild(tdType);
             tr.appendChild(tdPicket);
             tr.appendChild(tdDiameter);
-            tr.appendChild(tdThickness);
+            tr.appendChild(tdNomThick);
+            tr.appendChild(tdMinThick);
             tr.appendChild(tdActions);
 
             tbody.appendChild(tr);
 
-            // Обновить нумерацию
+            // Обновить номера секций после добавления
             updateSectionNumbers();
 
             return tr;
         }
 
-        // Функция для удаления строки
         function removeSectionRow(rowId) {
             const row = document.getElementById(rowId);
             if (row) {
@@ -1058,44 +1387,47 @@
             }
         }
 
-        // Функция для обновления нумерации строк
         function updateSectionNumbers() {
-            const tbody = document.getElementById('sectionsTableBody');
-            Array.from(tbody.children).forEach((row, index) => {
-                row.cells[0].textContent = index + 1;
+            const rows = document.getElementById('sectionsTableBody').children;
+            Array.from(rows).forEach((row, index) => {
+                const numberSpan = row.querySelector('.section-number-display');
+                if (numberSpan) {
+                    numberSpan.textContent = `Секция ${index + 1}`;
+                }
             });
         }
 
-        // Функция для сбора данных из таблицы
+        function clearAllSections() {
+            const tbody = document.getElementById('sectionsTableBody');
+            tbody.innerHTML = '';
+            sectionCounter = 0;
+        }
+
         function collectSectionsData() {
             const sections = [];
             const rows = document.getElementById('sectionsTableBody').children;
 
-            Array.from(rows).forEach(row => {
-                const name = row.querySelector('.section-name')?.value.trim();
+            Array.from(rows).forEach((row, index) => {
+                const type = row.querySelector('.section-type')?.value;
                 const picket = row.querySelector('.section-picket')?.value.trim();
                 const diameter = row.querySelector('.section-diameter')?.value.trim();
-                const thickness = row.querySelector('.section-thickness')?.value.trim();
+                const nominalThickness = row.querySelector('.section-nominal-thickness')?.value.trim();
+                const minThickness = row.querySelector('.section-min-thickness')?.value.trim();
 
                 // Добавляем только если заполнено хотя бы одно поле
-                if (name || picket || diameter || thickness) {
+                if (type || picket || diameter || nominalThickness || minThickness) {
                     sections.push({
-                        name: name || '',
+                        number: index + 1,
+                        type: type || '',
                         picket: picket || '',
                         diameter: diameter || '',
-                        thickness: thickness || ''
+                        nominalThickness: nominalThickness || '',
+                        minThickness: minThickness || ''
                     });
                 }
             });
 
             return sections;
-        }
-
-        // Очистка всех секций
-        function clearAllSections() {
-            const tbody = document.getElementById('sectionsTableBody');
-            tbody.innerHTML = '';
-            sectionCounter = 0;
         }
 
         // Загрузка существующих файлов
@@ -1216,7 +1548,7 @@
             }
         }
 
-        // НОВЫЕ ФУНКЦИИ: Управление загрузкой изображений
+        // Функции: Управление загрузкой изображений
         function setupImageDrop() {
             const dropArea = document.getElementById('imagesDropArea');
             const imageInput = document.getElementById('imageFiles');
@@ -1408,14 +1740,18 @@
             document.getElementById('graf_file_size').textContent = "";
             document.getElementById('grafFileDropArea').classList.remove('border-green-400', 'bg-green-50', 'border-red-400', 'bg-red-50');
 
-            // Очистить таблицу секций
+            // Очистить таблицы
             clearAllSections();
+            clearAllDataRows();
 
             // Очистить изображения
             clearAllImages();
 
             hideMessages();
             clear_graf_file();
+
+            // Восстановить сегодняшнюю дату
+            document.getElementById('passport_date').value = today;
         }
 
         function clear_graf_file() {
@@ -1477,6 +1813,10 @@
                 // Собрать данные секций и добавить их в FormData
                 const sectionsData = collectSectionsData();
                 document.getElementById('sectionsData').value = JSON.stringify(sectionsData);
+
+                // Собрать данные трубопровода
+                const pipelineData = collectDataRows();
+                document.getElementById('pipelineData').value = JSON.stringify(pipelineData);
 
                 const formData = new FormData(this);
 
@@ -1588,14 +1928,6 @@
                 });
             }
 
-            // Проверка данных секций (опционально - можно требовать хотя бы одну секцию)
-            const sections = collectSectionsData();
-            if (sections.length === 0) {
-                // if (!confirm('Вы не добавили ни одной секции трубопровода. Продолжить?')) {
-                //    return false;
-                // }
-            }
-
             return true;
         }
 
@@ -1653,10 +1985,11 @@
             });
         });
 
-        // Добавить первую строку по умолчанию
+        // Инициализация при загрузке страницы
         window.addEventListener('load', function() {
-            // Добавляем пустую строку для примера
+            // Добавляем пустые строки для примера
             addSectionRow();
+            addDataRow();
 
             // Загрузка существующих файлов
             preload_files();
