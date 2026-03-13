@@ -233,7 +233,7 @@ def add_row_pril_12_2(sections : list[Section], table : Table):
         table.row_cells(row_index)[3].text = f"{str(float(curr_section.area_nominal)).replace('.', ',')}"
         # table.row_cells(row_index)[4].text = 'ПОТОМ'
 
-        with open('result.json', 'br') as f:
+        with open('data/otbrak_table.json', 'br') as f:
             otbrak_data = json.load(f)
 
         if curr_section.type != SectionType.ZMS:
@@ -280,7 +280,7 @@ def add_row_pril_13(sections: list[Section], table: Table):
         table.row_cells(row_index)[4].text = f"{curr_section.steel}"
         # table.row_cells(row_index)[4].text = 'ПОТОМ'
 
-        with open('result.json', 'br') as f:
+        with open('data/otbrak_table.json', 'br') as f:
             otbrak_data = json.load(f)
 
         for j in range(len(curr_section.diam_measure_results)):
