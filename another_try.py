@@ -1,7 +1,7 @@
 import json
 
 from docx.oxml import parse_xml
-from flask import Flask, request, send_file, render_template, jsonify
+from flask import Flask, request, send_file, render_template, jsonify, has_request_context
 
 from pathlib import Path
 from datetime import datetime
@@ -21,6 +21,46 @@ from urllib.parse import quote
 
 import application_processing
 
+
+class ContextualLogger:
+    def __init__(self, logger):
+        self.logger = logger
+
+    def _get_client_ip(self):
+        if has_request_context():
+            return request.remote_addr or 'unknown'
+        return 'no-request'
+
+    def info(self, msg, *args, **kwargs):
+        client_ip = self._get_client_ip()
+        if client_ip == "192.168.0.198" or client_ip == "10.91.13.116":
+            self.logger.info(f"[ADMIN] {msg}", *args, **kwargs)
+        else:
+            self.logger.info(f"[{client_ip}] {msg}", *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        client_ip = self._get_client_ip()
+        if client_ip == "192.168.0.198" or client_ip == "10.91.13.116":
+            self.logger.error(f"[ADMIN] {msg}", *args, **kwargs)
+        else:
+            self.logger.error(f"[{client_ip}] {msg}", *args, **kwargs)
+
+    def warning(self, msg, *args, **kwargs):
+        client_ip = self._get_client_ip()
+        if client_ip == "192.168.0.198" or client_ip == "10.91.13.116":
+            self.logger.warning(f"[ADMIN] {msg}", *args, **kwargs)
+        else:
+            self.logger.warning(f"[{client_ip}] {msg}", *args, **kwargs)
+
+    def debug(self, msg, *args, **kwargs):
+        client_ip = self._get_client_ip()
+        if client_ip == "192.168.0.198" or client_ip == "10.91.13.116":
+            self.logger.debug(f"[ADMIN] {msg}", *args, **kwargs)
+        else:
+            self.logger.debug(f"[{client_ip}] {msg}", *args, **kwargs)
+
+
+# Использование
 # Настройка логирования (добавьте после импортов)
 logging.basicConfig(
     level=logging.INFO,
@@ -29,7 +69,9 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout),  # В systemd
     ]
 )
-logger = logging.getLogger(__name__)
+
+logger = ContextualLogger(logging.getLogger(__name__))
+# logger = logging.getLogger(__name__)
 
 app = Flask(
     __name__,
